@@ -1,28 +1,23 @@
-#-*- coding:utf-8 -*-
-
-# Author:longjiang
-
-
+# -*- coding:utf-8 -*-
+"""
+Author: longjiang
+"""
 
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
 
+URL = "https://datachart.500.com/ssq/history/newinc/history.php?start=1&end=18046"
+
 
 def spider():
-    url="https://datachart.500.com/ssq/history/newinc/history.php?start=1&end=18046"
-
-    r=requests.get(url=url)
-
+    r = requests.get(url=URL)
     r.encoding="gb2312"
-
-    soup=BeautifulSoup(r.text,"lxml")
-
-    trs= soup.find("tbody",attrs={"id":"tdata"}).find_all("tr")
-    data=list()
+    soup = BeautifulSoup(r.text, "lxml")
+    trs= soup.find("tbody", attrs={"id": "tdata"}).find_all("tr")
+    data = []
     for tr in trs:
         item=dict()
-
         item[u"期数"]= tr.find_all("td")[0].get_text().strip()
         item[u"红球号码_1"] = tr.find_all("td")[1].get_text().strip()
         item[u"红球号码_2"] = tr.find_all("td")[2].get_text().strip()
@@ -39,14 +34,11 @@ def spider():
         item[u"二等奖_奖金(元)"] = tr.find_all("td")[13].get_text().strip()
         item[u"总投注额(元)"] = tr.find_all("td")[14].get_text().strip()
         item[u"开奖日期"] = tr.find_all("td")[15].get_text().strip()
-
         data.append(item)
 
+    df = pd.DataFrame(data)
 
-    df=pd.DataFrame(data)
-
-    df.to_csv("data.csv",encoding="utf-8")
-
+    df.to_csv("data.csv", encoding="utf-8")
 
 if __name__=="__main__":
     spider()
