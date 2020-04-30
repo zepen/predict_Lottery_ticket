@@ -2,22 +2,38 @@
 """
 Author: longjiang
 """
-
 import requests
-from bs4 import BeautifulSoup
 import pandas as pd
+from bs4 import BeautifulSoup
+from config import *
 
-URL = "https://datachart.500.com/ssq/history/newinc/history.php?start=1&end=18046"
 
-
-def spider():
-    r = requests.get(url=URL)
-    r.encoding="gb2312"
+def get_current_number():
+    """ 获取最新一期数字
+    :return: int
+    """
+    r = requests.get("{}{}".format(URL, "history.shtml"))
+    r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
-    trs= soup.find("tbody", attrs={"id": "tdata"}).find_all("tr")
+    current_num = soup.find("div", class_="wrap_datachart").find("input", id="end")["value"]
+    return current_num
+
+
+def spider(start, end, mode):
+    """ 爬取历史数据
+    :param start 开始一期
+    :param end 最近一期
+    :param mode 模式
+    :return:
+    """
+    url = "{}{}{}".format(URL, path.format(start), end)
+    r = requests.get(url=url)
+    r.encoding = "gb2312"
+    soup = BeautifulSoup(r.text, "lxml")
+    trs = soup.find("tbody", attrs={"id": "tdata"}).find_all("tr")
     data = []
     for tr in trs:
-        item=dict()
+        item = dict()
         item[u"期数"]= tr.find_all("td")[0].get_text().strip()
         item[u"红球号码_1"] = tr.find_all("td")[1].get_text().strip()
         item[u"红球号码_2"] = tr.find_all("td")[2].get_text().strip()
@@ -36,9 +52,14 @@ def spider():
         item[u"开奖日期"] = tr.find_all("td")[15].get_text().strip()
         data.append(item)
 
-    df = pd.DataFrame(data)
+    if mode == "train":
+        df = pd.DataFrame(data)
+        df.to_csv("data/data.csv", encoding="utf-8")
+    elif mode == "predict":
+        return pd.DataFrame(data)
 
-    df.to_csv("data.csv", encoding="utf-8")
 
-if __name__=="__main__":
-    spider()
+if __name__ == "__main__":
+    print("最新一期期号：{}".format(get_current_number()))
+    print("正在获取数据。。。")
+    spider(1, get_current_number(), "train")
