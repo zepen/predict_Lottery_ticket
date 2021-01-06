@@ -42,8 +42,7 @@ def main():
 
 @app.route('/predict_api', methods=['GET'])
 def get_predict_result():
-    diff_number = 2
-    windows_size = 3
+    diff_number = windows_size - 1
     data = spider(str(int(get_current_number()) - diff_number), get_current_number(), "predict")[BOLL_NAME]
     if len(data) != 3:
         print("[WARN] 期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")

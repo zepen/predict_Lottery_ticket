@@ -52,21 +52,25 @@ def create_model_data(name, windows):
 
 def build_model(**kwargs):
     """ 构建模型
+    模型输入shape: (batch_size, windows_size, 1)
+    模型输出shape: (batch_size, n_class)
     :return:
     """
-    hidden_size, outputs_size = kwargs["hidden_size"], kwargs["outputs_size"]
+
+    hidden_size, outputs_size, w_s = kwargs["hidden_size"], kwargs["outputs_size"], kwargs["windows_size"]
     model = Sequential()
-    model.add(LSTM(hidden_size, input_shape=(3, 1), return_sequences=True))
+    model.add(LSTM(hidden_size, input_shape=(w_s, 1), return_sequences=True))
     model.add(LSTM(hidden_size, recurrent_dropout=0.2))
     model.add(Dense(outputs_size, activation="softmax"))
     model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=["accuracy"])
     return model
 
 
-def train_model(x_data, y_data, b_name):
+def train_model(x_data, y_data, windows, b_name):
     """ 模型训练
     :param x_data: 训练样本
     :param y_data: 训练标签
+    :param windows:  序列窗口
     :param b_name: 球号名
     :return:
     """
@@ -79,7 +83,7 @@ def train_model(x_data, y_data, b_name):
     y_data = to_categorical(y_data - 1, num_classes=n_class)
     print("[INFO] The x_data shape is {}".format(x_data.shape))
     print("[INFO] The y_data shape is {}".format(y_data.shape))
-    model = build_model(hidden_size=32, outputs_size=n_class)
+    model = build_model(hidden_size=32, outputs_size=n_class, windows_size=windows)
     callbacks = [
         EarlyStopping(monitor='accuracy', patience=3, verbose=2, mode='max')
     ]
@@ -90,10 +94,9 @@ def train_model(x_data, y_data, b_name):
 
 
 if __name__ == '__main__':
-    windows_size = 3
     for b_n in BOLL_NAME:
         start_time = time.time()
         print("[INFO] 开始训练: {}".format(b_n))
         x_train, y_train = create_model_data(b_n, windows_size)
-        train_model(x_train, y_train, b_n)
+        train_model(x_train, y_train, windows_size, b_n)
         print("[INFO] 训练耗时: {}".format(time.time() - start_time))

@@ -18,3 +18,6 @@ BOLL_NAME = [
 
 train_data_path = "data/"
 train_data_file = "data.csv"
+
+# 预测序列
+windows_size = 3
