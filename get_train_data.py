@@ -1,7 +1,8 @@
 # -*- coding:utf-8 -*-
 """
-Author: longjiang
+Author: BigCat
 """
+import os
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -34,7 +35,7 @@ def spider(start, end, mode):
     data = []
     for tr in trs:
         item = dict()
-        item[u"期数"]= tr.find_all("td")[0].get_text().strip()
+        item[u"期数"] = tr.find_all("td")[0].get_text().strip()
         item[u"红球号码_1"] = tr.find_all("td")[1].get_text().strip()
         item[u"红球号码_2"] = tr.find_all("td")[2].get_text().strip()
         item[u"红球号码_3"] = tr.find_all("td")[3].get_text().strip()
@@ -54,12 +55,15 @@ def spider(start, end, mode):
 
     if mode == "train":
         df = pd.DataFrame(data)
-        df.to_csv("data/data.csv", encoding="utf-8")
+        df.to_csv("{}{}".format(train_data_path, train_data_file), encoding="utf-8")
     elif mode == "predict":
         return pd.DataFrame(data)
 
 
 if __name__ == "__main__":
-    print("最新一期期号：{}".format(get_current_number()))
-    print("正在获取数据。。。")
+    print("[INFO] 最新一期期号：{}".format(get_current_number()))
+    print("[INFO] 正在获取数据。。。")
+    if not os.path.exists(train_data_path):
+        os.mkdir(train_data_path)
     spider(1, get_current_number(), "train")
+    print("[INFO] 数据获取完成，请查看data/data.csv文件。")

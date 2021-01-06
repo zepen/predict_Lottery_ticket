@@ -1,8 +1,9 @@
 # -*- coding:utf-8 -*-
 """
-Author: Niuzepeng
+Author: BigCat
 """
 import os
+import time
 import numpy as np
 import pandas as pd
 from config import *
@@ -12,9 +13,11 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import EarlyStopping
 
-DATA = pd.read_csv(train_data_path)
+DATA = pd.read_csv("{}{}".format(train_data_path, train_data_file))
 if not len(DATA):
-    raise Exception("请执行 get_train_data.py 进行数据下载！")
+    raise Exception("[ERROR] 请执行 get_train_data.py 进行数据下载！")
+else:
+    print("[INFO] 训练数据已加载! ")
 
 
 def transform_data(name):
@@ -35,15 +38,29 @@ def transform_data(name):
     return np.array(fl)
 
 
-def create_model_data(name):
+def create_model_data(name, windows):
     """ 创建训练数据
     :param name: 要训练的球号
+    :param windows: 训练窗口
     :return:
     """
     data = transform_data(name)
-    x_data = data[:, 0:3].reshape([-1, 3, 1])
-    y_data = data[:, 3:].ravel()
+    x_data = data[:, 0:windows].reshape([-1, windows, 1])
+    y_data = data[:, windows:].ravel()
     return x_data, y_data
+
+
+def build_model(**kwargs):
+    """ 构建模型
+    :return:
+    """
+    hidden_size, outputs_size = kwargs["hidden_size"], kwargs["outputs_size"]
+    model = Sequential()
+    model.add(LSTM(hidden_size, input_shape=(3, 1), return_sequences=True))
+    model.add(LSTM(hidden_size, recurrent_dropout=0.2))
+    model.add(Dense(outputs_size, activation="softmax"))
+    model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=["accuracy"])
+    return model
 
 
 def train_model(x_data, y_data, b_name):
@@ -60,13 +77,9 @@ def train_model(x_data, y_data, b_name):
         n_class = 16
     x_data = x_data - 1
     y_data = to_categorical(y_data - 1, num_classes=n_class)
-    print("The x_data shape is {}".format(x_data.shape))
-    print("The y_data shape is {}".format(y_data.shape))
-    model = Sequential()
-    model.add(LSTM(32, input_shape=(3, 1), return_sequences=True))
-    model.add(LSTM(32, recurrent_dropout=0.2))
-    model.add(Dense(n_class, activation="softmax"))
-    model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=["accuracy"])
+    print("[INFO] The x_data shape is {}".format(x_data.shape))
+    print("[INFO] The y_data shape is {}".format(y_data.shape))
+    model = build_model(hidden_size=32, outputs_size=n_class)
     callbacks = [
         EarlyStopping(monitor='accuracy', patience=3, verbose=2, mode='max')
     ]
@@ -77,7 +90,10 @@ def train_model(x_data, y_data, b_name):
 
 
 if __name__ == '__main__':
+    windows_size = 3
     for b_n in BOLL_NAME:
+        start_time = time.time()
         print("[INFO] 开始训练: {}".format(b_n))
-        x_train, y_train = create_model_data(b_n)
+        x_train, y_train = create_model_data(b_n, windows_size)
         train_model(x_train, y_train, b_n)
+        print("[INFO] 训练耗时: {}".format(time.time() - start_time))

@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2020/5/1 1:46 上午
-# @Author  : niuzepeng
-# @Site    : 
-# @File    : config.py
+"""
+Author: BigCat
+"""
 
 URL = "https://datachart.500.com/ssq/history/"
 path = "newinc/history.php?start={}&end="
@@ -17,4 +16,5 @@ BOLL_NAME = [
     "蓝球"
 ]
 
-train_data_path = "data/data.csv"
+train_data_path = "data/"
+train_data_file = "data.csv"
