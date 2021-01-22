@@ -14,9 +14,8 @@
 执行 python get_train_data.py 用于获取训练数据，
 如果出现解析错误，应该看看网页 http://datachart.500.com/ssq/history/newinc/history.php 是否可以正常访问
 
-执行 python train_model.py 用于模型训练，模型训练完成会保存至model文件下，默认是一个球一个序列模型，训练结束后会得到7个模型文件，
-我是i7-8550U 的CPU + NVIDIA GeFore MX150 GPU, 整个训练时间大概40分钟左右，训练时间太久的话可以减小epochs参数值。
-build_model函数中定义得模型可修改定义，但要保证输入输出shape与原模型一致。
+执行 python train_model.py 开始模型训练，先训练红球模型，再训练蓝球模型，模型参数和超参数在 config.py 文件中自行配置
+具体训练时间消耗与模型参数和超参数相关。
 
 执行 python run_api.py 启动一个微服务，获取每天预测号码，获取预测访问url为: http://127.0.0.1:5000/predict_api
 服务部署在后台，可以直接在浏览器上每日获取预测结果。
