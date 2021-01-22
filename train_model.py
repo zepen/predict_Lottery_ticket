@@ -4,15 +4,13 @@ Author: BigCat
 """
 import os
 import time
+import json
 import numpy as np
 import pandas as pd
 from config import *
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import EarlyStopping
+from modeling import *
 
+pred_key = {}
 DATA = pd.read_csv("{}{}".format(train_data_path, train_data_file))
 if not len(DATA):
     raise Exception("[ERROR] 请执行 get_train_data.py 进行数据下载！")
@@ -20,83 +18,133 @@ else:
     print("[INFO] 训练数据已加载! ")
 
 
-def transform_data(name):
-    """ 数据转换
-    :param name: 要训练的球号
-    :return:
-    """
-    data_list = DATA[name].tolist()
-    data_list_len = len(data_list)
-    end_index = int(np.float(data_list_len / float(4)) * 4)
-    data_list.reverse()
-    fl = []
-    for index, _ in enumerate(data_list[0: end_index - 4]):
-        l_ = []
-        for i in range(4):
-            l_.append(data_list[index + i])
-        fl.append(l_)
-    return np.array(fl)
-
-
-def create_model_data(name, windows):
+def create_train_data(name, windows, ball_num=6):
     """ 创建训练数据
-    :param name: 要训练的球号
+    :param name: 红/蓝 球
     :param windows: 训练窗口
+    :param ball_num: 多少颗球
     :return:
     """
-    data = transform_data(name)
-    x_data = data[:, 0:windows].reshape([-1, windows, 1])
-    y_data = data[:, windows:].ravel()
-    return x_data, y_data
+    if name == BOLL_NAME[0]:
+        data = DATA[["{}号码_{}".format(name, num + 1) for num in range(ball_num)]].values
+    else:
+        data = DATA[[name]].values
+    print("[INFO] data shape: {}".format(data.shape))
+    x_data, y_data = [], []
+    for i in range(len(data) - windows - 1):
+        sub_data = data[i:(i+windows+1), :]
+        x_data.append(sub_data[1:])
+        y_data.append(sub_data[0])
+    if name == BOLL_NAME[0]:
+        return np.array(x_data), np.array(y_data)
+    else:
+        return np.array(x_data).reshape(len(data) - windows - 1, windows), np.array(y_data)
 
 
-def build_model(**kwargs):
-    """ 构建模型
-    模型输入shape: (batch_size, windows_size, 1)
-    模型输出shape: (batch_size, n_class)
-    :return:
-    """
-
-    hidden_size, outputs_size, w_s = kwargs["hidden_size"], kwargs["outputs_size"], kwargs["windows_size"]
-    model = Sequential()
-    model.add(LSTM(hidden_size, input_shape=(w_s, 1), return_sequences=True))
-    model.add(LSTM(hidden_size, recurrent_dropout=0.2))
-    model.add(Dense(outputs_size, activation="softmax"))
-    model.compile(optimizer=Adam(), loss='categorical_crossentropy', metrics=["accuracy"])
-    return model
-
-
-def train_model(x_data, y_data, windows, b_name):
+def train_model(x_data, y_data, b_name):
     """ 模型训练
     :param x_data: 训练样本
     :param y_data: 训练标签
-    :param windows:  序列窗口
-    :param b_name: 球号名
+    :param b_name: 球颜色名
     :return:
     """
-    n_class = 0
-    if b_name[0] == "红":
-        n_class = 33
-    elif b_name[0] == "蓝":
-        n_class = 16
-    x_data = x_data - 1
-    y_data = to_categorical(y_data - 1, num_classes=n_class)
-    print("[INFO] The x_data shape is {}".format(x_data.shape))
-    print("[INFO] The y_data shape is {}".format(y_data.shape))
-    model = build_model(hidden_size=32, outputs_size=n_class, windows_size=windows)
-    callbacks = [
-        EarlyStopping(monitor='accuracy', patience=3, verbose=2, mode='max')
-    ]
-    model.fit(x_data, y_data, batch_size=1, epochs=100, verbose=1, callbacks=callbacks)
-    if not os.path.exists("model"):
-        os.mkdir("model")
-    model.save("model/lstm_model_{}.h5".format(b_name))
+    if b_name == BOLL_NAME[0]:
+        x_data = x_data - 1
+        y_data = y_data - 1
+        data_len = x_data.shape[0]
+        print("[INFO] The x_data shape is {}".format(x_data.shape))
+        print("[INFO] The y_data shape is {}".format(y_data.shape))
+        with tf.compat.v1.Session() as sess:
+            red_ball_model = RedBallModel(
+                batch_size=batch_size,
+                n_class=red_n_class,
+                ball_num=sequence_len,
+                w_size=windows_size,
+                embedding_size=red_embedding_size,
+                words_size=red_n_class,
+                hidden_size=red_hidden_size,
+                layer_size=red_layer_size
+            )
+            train_step = tf.compat.v1.train.AdamOptimizer(
+                learning_rate=red_learning_rate,
+                beta1=red_beta1,
+                beta2=red_beta2,
+                epsilon=red_epsilon,
+                use_locking=False,
+                name='Adam'
+            ).minimize(red_ball_model.loss)
+            sess.run(tf.compat.v1.global_variables_initializer())
+            for epoch in range(red_epochs):
+                for i in range(data_len):
+                    _, loss_, pred = sess.run([
+                        train_step, red_ball_model.loss, red_ball_model.pred_sequence
+                    ], feed_dict={
+                        "red_inputs:0": x_data[i:(i+1), :, :],
+                        "red_tag_indices:0": y_data[i:(i+1), :],
+                        "sequence_length:0": np.array([sequence_len]*1)
+                    })
+                    if i % 100 == 0:
+                        print("[INFO] epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                            epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
+                        )
+            pred_key[b_name] = red_ball_model.pred_sequence.name
+            if not os.path.exists(red_ball_model_path):
+                os.mkdir(red_ball_model_path)
+            saver = tf.compat.v1.train.Saver()
+            saver.save(sess, "{}{}.{}".format(red_ball_model_path, red_ball_model_name, extension))
+    elif b_name == BOLL_NAME[1]:
+        # 重置网络图
+        tf.compat.v1.reset_default_graph()
+        x_data = x_data - 1
+        data_len = x_data.shape[0]
+        y_data = tf.keras.utils.to_categorical(y_data - 1, num_classes=blue_n_class)
+        print("[INFO] The x_data shape is {}".format(x_data.shape))
+        print("[INFO] The y_data shape is {}".format(y_data.shape))
+        with tf.compat.v1.Session() as sess:
+            blue_ball_model = BlueBallModel(
+                batch_size=batch_size,
+                n_class=blue_n_class,
+                w_size=windows_size,
+                embedding_size=blue_embedding_size,
+                hidden_size=blue_hidden_size,
+                outputs_size=blue_n_class,
+                layer_size=blue_layer_size
+            )
+            train_step = tf.compat.v1.train.AdamOptimizer(
+                learning_rate=blue_learning_rate,
+                beta1=blue_beta1,
+                beta2=blue_beta2,
+                epsilon=blue_epsilon,
+                use_locking=False,
+                name='Adam'
+            ).minimize(blue_ball_model.loss)
+            sess.run(tf.compat.v1.global_variables_initializer())
+            for epoch in range(blue_epochs):
+                for i in range(data_len):
+                    _, loss_, pred = sess.run([
+                        train_step, blue_ball_model.loss, blue_ball_model.pred_label
+                    ], feed_dict={
+                        "blue_inputs:0": x_data[i:(i+1), :],
+                        "blue_tag_indices:0": y_data[i:(i+1), :],
+                    })
+                    if i % 100 == 0:
+                        print("[INFO] epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                            epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
+                        )
+            pred_key[b_name] = blue_ball_model.pred_label.name
+            if not os.path.exists(blue_ball_model_path):
+                os.mkdir(blue_ball_model_path)
+            saver = tf.compat.v1.train.Saver()
+            saver.save(sess, "{}{}.{}".format(blue_ball_model_path, blue_ball_model_name, extension))
+    # 保存预测关键结点名
+    with open("{}{}".format(model_path, pred_key_name), "w") as f:
+        json.dump(pred_key, f)
 
 
 if __name__ == '__main__':
     for b_n in BOLL_NAME:
         start_time = time.time()
         print("[INFO] 开始训练: {}".format(b_n))
-        x_train, y_train = create_model_data(b_n, windows_size)
-        train_model(x_train, y_train, windows_size, b_n)
+        x_train, y_train = create_train_data(b_n, windows_size)
+        train_model(x_train, y_train, b_n)
         print("[INFO] 训练耗时: {}".format(time.time() - start_time))

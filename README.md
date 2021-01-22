@@ -4,6 +4,12 @@
 因为项目本身涉及到爬虫，机器学习，后端服务技术，而且是面向开发者的，我默认大家有这方面技术背景且能解决一些常识问题，故没有做太多细节说明，特此表示抱歉。
 项目仅仅是抛砖引玉，很多地方都不是绝对的，目的是为了感兴趣的朋友可以自定义调试。
 
+## Update
+之前有issue反应，因为不同红球模型预测会有重复号码出现，所以将红球序列整体作为一个序列模型看待，推翻之前红球之间相互独立设定，
+因为序列模型预测要引入crf层，相关API必须在 tf.compat.v1.disable_eager_execution()下，故整个模型采用 1.x 构建和训练模式，
+在 2.x 的tensorflow中 tf.compat.v1.XXX 保留了 1.x 的接口方式。
+
+
 ## Getting Started
 执行 python get_train_data.py 用于获取训练数据，
 如果出现解析错误，应该看看网页 http://datachart.500.com/ssq/history/newinc/history.php 是否可以正常访问
