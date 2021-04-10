@@ -3,31 +3,31 @@
 Author: BigCat
 """
 import os
+import json
 import requests
-import pandas as pd
 from bs4 import BeautifulSoup
-from config import *
+import config
 
 
 def get_current_number():
-    """ 获取最新一期数字
+    """获取最新一期数字
     :return: int
     """
-    r = requests.get("{}{}".format(URL, "history.shtml"))
+    r = requests.get("{}{}".format(config.URL, "history.shtml"))
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
     current_num = soup.find("div", class_="wrap_datachart").find("input", id="end")["value"]
     return current_num
 
 
-def spider(start, end, mode):
-    """ 爬取历史数据
+def spider(start, end):
+    """爬取历史数据
     :param start 开始一期
     :param end 最近一期
     :param mode 模式
     :return:
     """
-    url = "{}{}{}".format(URL, path.format(start), end)
+    url = "{}{}{}".format(config.URL, config.path.format(start), end)
     r = requests.get(url=url)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
@@ -53,17 +53,14 @@ def spider(start, end, mode):
         item[u"开奖日期"] = tr.find_all("td")[15].get_text().strip()
         data.append(item)
 
-    if mode == "train":
-        df = pd.DataFrame(data)
-        df.to_csv("{}{}".format(train_data_path, train_data_file), encoding="utf-8")
-    elif mode == "predict":
-        return pd.DataFrame(data)
+    with open('{}{}'.format(config.train_data_path, config.train_data_file), 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False)
 
 
 if __name__ == "__main__":
     print("[INFO] 最新一期期号：{}".format(get_current_number()))
     print("[INFO] 正在获取数据。。。")
-    if not os.path.exists(train_data_path):
-        os.mkdir(train_data_path)
-    spider(1, get_current_number(), "train")
-    print("[INFO] 数据获取完成，请查看data/data.csv文件。")
+    if not os.path.exists(config.train_data_path):
+        os.mkdir(config.train_data_path)
+    spider(1, get_current_number())
+    print("[INFO] 数据获取完成，请查看data/data.json文件。")

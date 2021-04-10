@@ -8,11 +8,11 @@ path = "newinc/history.php?start={}&end="
 
 BOLL_NAME = [
     "红球",
-    "蓝球"
+    "蓝球",
 ]
 
 train_data_path = "data/"
-train_data_file = "data.csv"
+train_data_file = "data.json"
 
 # 模型相关参数
 windows_size = 3
