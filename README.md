@@ -11,13 +11,17 @@
 
 
 ## Getting Started
-执行 python get_train_data.py 用于获取训练数据，
+
+1. 执行 `python get_train_data.py` 用于获取训练数据，
+
 如果出现解析错误，应该看看网页 http://datachart.500.com/ssq/history/newinc/history.php 是否可以正常访问
 
-执行 python train_model.py 开始模型训练，先训练红球模型，再训练蓝球模型，模型参数和超参数在 config.py 文件中自行配置
+2. 执行 `python train_model.py` 开始模型训练，先训练红球模型，再训练蓝球模型，模型参数和超参数在 config.py 文件中自行配置
+
 具体训练时间消耗与模型参数和超参数相关。
 
-执行 python run_api.py 启动一个微服务，获取每天预测号码，获取预测访问url为: http://127.0.0.1:5000/predict_api
+3. 执行 `python run_api.py` 启动一个微服务，获取每天预测号码，获取预测访问url为: http://127.0.0.1:5000/predict_api
+
 服务部署在后台，可以直接在浏览器上每日获取预测结果。
 
 ### Installing
