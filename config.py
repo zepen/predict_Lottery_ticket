@@ -50,3 +50,8 @@ pred_key_name = "key_name.json"
 red_ball_model_name = "red_ball_model"
 blue_ball_model_name = "blue_ball_model"
 extension = "ckpt"
+
+# 日志路径
+log_path = os.getcwd() + "/log/"
+access_log = log_path + "access.log"
+error_log = log_path + "error.log"

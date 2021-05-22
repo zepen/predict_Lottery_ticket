@@ -14,8 +14,17 @@ DATA = pd.read_csv("{}{}".format(train_data_path, train_data_file))
 if not len(DATA):
     raise Exception("[ERROR] 请执行 get_train_data.py 进行数据下载！")
 else:
+    # 创建模型文件夹
     if not os.path.exists(model_path):
         os.mkdir(model_path)
+    # 创建日志文件夹
+    if not os.path.exists(log_path):
+        os.mkdir(log_path)
+    # 创建日志文件
+    if not os.path.exists(access_log):
+        os.mknod(access_log)
+    if not os.path.exists(error_log):
+        os.mknod(error_log)    
     print("[INFO] 训练数据已加载! ")
 
 
