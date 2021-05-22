@@ -2,7 +2,6 @@
 """
 Author: BigCat
 """
-import os
 import time
 import json
 import numpy as np
@@ -15,6 +14,8 @@ DATA = pd.read_csv("{}{}".format(train_data_path, train_data_file))
 if not len(DATA):
     raise Exception("[ERROR] 请执行 get_train_data.py 进行数据下载！")
 else:
+    if not os.path.exists(model_path):
+        os.mkdir(model_path)
     print("[INFO] 训练数据已加载! ")
 
 
@@ -137,7 +138,7 @@ def train_model(x_data, y_data, b_name):
             saver = tf.compat.v1.train.Saver()
             saver.save(sess, "{}{}.{}".format(blue_ball_model_path, blue_ball_model_name, extension))
     # 保存预测关键结点名
-    with open("{}{}".format(model_path, pred_key_name), "w") as f:
+    with open("{}/{}".format(model_path, pred_key_name), "w") as f:
         json.dump(pred_key, f)
 
 

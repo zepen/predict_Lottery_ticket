@@ -2,6 +2,7 @@
 """
 Author: BigCat
 """
+import os
 
 URL = "https://datachart.500.com/ssq/history/"
 path = "newinc/history.php?start={}&end="
@@ -40,9 +41,9 @@ blue_beta2 = 0.999
 blue_epsilon = 1e-08
 
 # 模型路径
-model_path = "model/"
-red_ball_model_path = "model/red_ball_model/"
-blue_ball_model_path = "model/blue_ball_model/"
+model_path = os.getcwd() + "/model/"
+red_ball_model_path = model_path + "/red_ball_model/"
+blue_ball_model_path = model_path + "/blue_ball_model/"
 
 # 模型名
 pred_key_name = "key_name.json"
