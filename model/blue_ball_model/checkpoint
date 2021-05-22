@@ -1,2 +1,0 @@
-model_checkpoint_path: "/home/workplace/predict_Lottery_ticket/model//blue_ball_model/blue_ball_model.ckpt"
-all_model_checkpoint_paths: "/home/workplace/predict_Lottery_ticket/model//blue_ball_model/blue_ball_model.ckpt"
