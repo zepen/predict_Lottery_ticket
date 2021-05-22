@@ -25,7 +25,7 @@ def create_train_data(name, windows, ball_num=6):
     :param ball_num: 多少颗球
     :return:
     """
-    if name == BOLL_NAME[0]:
+    if name == BOLL_NAME[0][0]:
         data = DATA[["{}号码_{}".format(name, num + 1) for num in range(ball_num)]].values
     else:
         data = DATA[[name]].values
@@ -35,7 +35,7 @@ def create_train_data(name, windows, ball_num=6):
         sub_data = data[i:(i+windows+1), :]
         x_data.append(sub_data[1:])
         y_data.append(sub_data[0])
-    if name == BOLL_NAME[0]:
+    if name == BOLL_NAME[0][0]:
         return np.array(x_data), np.array(y_data)
     else:
         return np.array(x_data).reshape(len(data) - windows - 1, windows), np.array(y_data)
@@ -48,7 +48,7 @@ def train_model(x_data, y_data, b_name):
     :param b_name: 球颜色名
     :return:
     """
-    if b_name == BOLL_NAME[0]:
+    if b_name == BOLL_NAME[0][0]:
         x_data = x_data - 1
         y_data = y_data - 1
         data_len = x_data.shape[0]
@@ -92,7 +92,7 @@ def train_model(x_data, y_data, b_name):
                 os.mkdir(red_ball_model_path)
             saver = tf.compat.v1.train.Saver()
             saver.save(sess, "{}{}.{}".format(red_ball_model_path, red_ball_model_name, extension))
-    elif b_name == BOLL_NAME[1]:
+    elif b_name == BOLL_NAME[1][0]:
         # 重置网络图
         tf.compat.v1.reset_default_graph()
         x_data = x_data - 1
@@ -142,7 +142,7 @@ def train_model(x_data, y_data, b_name):
 
 
 if __name__ == '__main__':
-    for b_n in BOLL_NAME:
+    for b_n, _ in BOLL_NAME:
         start_time = time.time()
         print("[INFO] 开始训练: {}".format(b_n))
         x_train, y_train = create_train_data(b_n, windows_size)

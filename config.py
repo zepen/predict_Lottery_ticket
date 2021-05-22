@@ -7,8 +7,8 @@ URL = "https://datachart.500.com/ssq/history/"
 path = "newinc/history.php?start={}&end="
 
 BOLL_NAME = [
-    "红球",
-    "蓝球"
+    ("红球", "red"),
+    ("蓝球", "blue")
 ]
 
 train_data_path = "data/"

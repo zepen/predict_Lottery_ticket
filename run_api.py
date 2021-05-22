@@ -52,32 +52,32 @@ def main():
 def get_predict_result():
     diff_number = windows_size - 1
     data = spider(str(int(get_current_number()) - diff_number), get_current_number(), "predict")
-    red_name_list = ["{}号码_{}".format(BOLL_NAME[0], i + 1) for i in range(sequence_len)]
-    red_data = data[red_name_list].values.astype(int) - 1
-    blue_data = data[[BOLL_NAME[1]]].values.astype(int) - 1
+    red_name_list = [(BOLL_NAME[0], i + 1) for i in range(sequence_len)]
+    red_data = data[["{}号码_{}".format(name[0], i) for name, i in red_name_list]].values.astype(int) - 1
+    blue_data = data[[BOLL_NAME[1][0]]].values.astype(int) - 1
     if len(data) != 3:
         print("[WARN] 期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")
         last_current_year = (get_year() - 1) * 1000
         max_times = 160
         while len(data) != 3:
-            data = spider(last_current_year + max_times, get_current_number(), "predict")[BOLL_NAME]
+            data = spider(last_current_year + max_times, get_current_number(), "predict")[[x[0] for x in BOLL_NAME]]
             time.sleep(np.random.random(1).tolist()[0])
             max_times -= 1
     # 预测红球
     with red_graph.as_default():
-        reverse_sequence = tf.compat.v1.get_default_graph().get_tensor_by_name(pred_key_d[BOLL_NAME[0]])
+        reverse_sequence = tf.compat.v1.get_default_graph().get_tensor_by_name(pred_key_d[BOLL_NAME[0][0]])
         red_pred = red_sess.run(reverse_sequence, feed_dict={
             "red_inputs:0": red_data.reshape(batch_size, windows_size, sequence_len),
             "sequence_length:0": np.array([sequence_len] * 1)
         })
     # 预测蓝球
     with blue_graph.as_default():
-        softmax = tf.compat.v1.get_default_graph().get_tensor_by_name(pred_key_d[BOLL_NAME[1]])
+        softmax = tf.compat.v1.get_default_graph().get_tensor_by_name(pred_key_d[BOLL_NAME[1][0]])
         blue_pred = blue_sess.run(softmax, feed_dict={
             "blue_inputs:0": blue_data.reshape(batch_size, windows_size)
         })
     # 拼接结果
-    ball_name_list = red_name_list + [BOLL_NAME[1]]
+    ball_name_list = ["{}_{}".format(name[1], i) for name, i in red_name_list] + [BOLL_NAME[1][1]]
     pred_result_list = red_pred[0].tolist() + blue_pred.tolist()
     return json.dumps(
         {b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)}
