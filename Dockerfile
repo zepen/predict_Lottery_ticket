@@ -9,4 +9,6 @@ WORKDIR /usr/src/app
 # 安装支持
 RUN pip install --no-cache-dir -r requirements.txt
 
+CMD [ "python", "get_train_data.py"]
+CMD [ "python", "train_model.py"]
 CMD [ "gunicorn", "-c gunicorn_conf.py", "run_api:app"]
