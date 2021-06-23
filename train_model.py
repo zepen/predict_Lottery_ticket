@@ -22,9 +22,9 @@ else:
         os.mkdir(log_path)
     # 创建日志文件
     if not os.path.exists(access_log):
-        os.mknod(access_log)
+        open(access_log,"w")
     if not os.path.exists(error_log):
-        os.mknod(error_log)    
+        open(error_log,"w")
     print("[INFO] 训练数据已加载! ")
 
 
