@@ -1,4 +1,4 @@
-FROM aimehub/tensorflow-2.6.1-cuda11.2:latest
+FROM python:3.8.1
 
 # 代码添加到code文件夹
 ADD . /usr/src/app
