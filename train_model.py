@@ -8,11 +8,12 @@ import numpy as np
 import pandas as pd
 from config import *
 from modeling import *
+from loguru import logger
 
 pred_key = {}
 DATA = pd.read_csv("{}{}".format(train_data_path, train_data_file))
 if not len(DATA):
-    raise Exception("[ERROR] 请执行 get_train_data.py 进行数据下载！")
+    raise logger.error(" 请执行 get_train_data.py 进行数据下载！")
 else:
     # 创建模型文件夹
     if not os.path.exists(model_path):
@@ -21,11 +22,11 @@ else:
     if not os.path.exists(log_path):
         os.mkdir(log_path)
     # 创建日志文件
-    if not os.path.exists(access_log):
-        os.mknod(access_log)
-    if not os.path.exists(error_log):
-        os.mknod(error_log)    
-    print("[INFO] 训练数据已加载! ")
+    # if not os.path.exists(access_log):
+    #     os.mknod(access_log)
+    # if not os.path.exists(error_log):
+    #     os.mknod(error_log)
+    logger.info("训练数据已加载! ")
 
 
 def create_train_data(name, windows, ball_num=6):
@@ -154,7 +155,7 @@ def train_model(x_data, y_data, b_name):
 if __name__ == '__main__':
     for b_n, _ in BOLL_NAME:
         start_time = time.time()
-        print("[INFO] 开始训练: {}".format(b_n))
+        logger.info("开始训练: {}".format(b_n))
         x_train, y_train = create_train_data(b_n, windows_size)
         train_model(x_train, y_train, b_n)
-        print("[INFO] 训练耗时: {}".format(time.time() - start_time))
+        logger.info("训练耗时: {}".format(time.time() - start_time))

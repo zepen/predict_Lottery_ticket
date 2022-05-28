@@ -2,10 +2,10 @@
 """
 Author: BigCat
 """
-import os
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
+from loguru import logger
 from config import *
 
 
@@ -61,9 +61,12 @@ def spider(start, end, mode):
 
 
 if __name__ == "__main__":
-    print("[INFO] 最新一期期号：{}".format(get_current_number()))
-    print("[INFO] 正在获取数据。。。")
+    logger.info("最新一期期号：{}".format(get_current_number()))
+    logger.info("正在获取数据。。。")
     if not os.path.exists(train_data_path):
         os.mkdir(train_data_path)
     spider(1, get_current_number(), "train")
-    print("[INFO] 数据获取完成，请查看data/data.csv文件。")
+    if "data" in os.listdir(os.getcwd()):
+        logger.info("data is be ready, next start training model...")
+    else:
+        logger.error("data file is not exist1")
