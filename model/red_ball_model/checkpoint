@@ -1,0 +1,2 @@
+model_checkpoint_path: "E:\\GitHub\\predict_Lottery_ticket/model//red_ball_model/red_ball_model.ckpt"
+all_model_checkpoint_paths: "E:\\GitHub\\predict_Lottery_ticket/model//red_ball_model/red_ball_model.ckpt"
