@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 #CMD [ "python", "get_train_data.py"]
 #CMD [ "python", "train_model.py"]
-CMD ["gunicorn", "-c", "/usr/src/app/gunicorn.conf", "run_api:app"]
+CMD ["gunicorn", "-c", "/usr/src/app/gunicorn_conf.py", "run_api:app"]
