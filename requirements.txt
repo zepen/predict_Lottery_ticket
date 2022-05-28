@@ -10,4 +10,4 @@ gunicorn==20.1.0
 gevent==1.4.0
 loguru==0.6.0
 grpcio==1.46.0
-protobuf==3.19.4
+protobuf==3.18.1
