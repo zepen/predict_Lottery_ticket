@@ -1,4 +1,4 @@
-FROM python:3.6.12
+FROM tensorflow/tensorflow:2.6.2
 
 # 代码添加到code文件夹
 ADD . /usr/src/app
