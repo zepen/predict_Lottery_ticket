@@ -1,4 +1,4 @@
-Flask==1.1.1
+Flask==2.0.2
 tensorflow==2.6.1
 tensorflow-addons==0.10.0
 requests==2.22.0
