@@ -10,6 +10,6 @@ WORKDIR /usr/src/app
 RUN pip install --upgrade pip -i  https://pypi.tuna.tsinghua.edu.cn/simple/
 RUN pip install --no-cache-dir -r requirements.txt
 
-#CMD [ "python", "get_train_data.py"]
-#CMD [ "python", "train_model.py"]
+CMD [ "python", "get_train_data.py"]
+CMD [ "python", "train_model.py"]
 CMD ["gunicorn", "-c", "/usr/src/app/gunicorn_conf.py", "run_api:app"]
