@@ -52,6 +52,6 @@ blue_ball_model_name = "blue_ball_model"
 extension = "ckpt"
 
 # 日志路径
-log_path = os.getcwd() + "/log/"
+log_path = os.getcwd() + "/logs/"
 access_log = log_path + "access.log"
 error_log = log_path + "error.log"
