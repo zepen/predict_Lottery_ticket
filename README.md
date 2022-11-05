@@ -5,7 +5,30 @@
 项目仅仅是抛砖引玉，很多地方都不是绝对的，目的是为了感兴趣的朋友可以自定义调试。
 
 ## Update
-之前有issue反应，因为不同红球模型预测会有重复号码出现，所以将红球序列整体作为一个序列模型看待，推翻之前红球之间相互独立设定，
+* 非常开心有更多的同志们关注项目，并且提出了很多宝贵的问题，但是由于工作较忙，没有精力给大家一一解答，这里统一解决一下。
+关于相关库安装问题，有两种方法（推荐第一种方式，docker方式本人只在腾讯微服务上成功过，其他服务云不清楚会有什么问题）：
+    
+    1. 通过安装ancoda方式
+        
+        step1，安装anconda，创建一个conda环境，conda create -n your_env_name python=3.6；
+       
+        step2，进入创建conda的环境 conda activate your_env_name，然后执行pip install -r requirements.txt；
+       
+        step3，按照Getting Started执行即可；
+    
+    2. 通过docker方式
+        
+        step1，先安装docker，具体可以参考 https://blog.csdn.net/qq_44858888/article/details/124084408；
+        
+        step2，执行docker build . (注意这个点号是命令的一部分)，之后的下载数据、训练模型、启动服务都会在docker中完成；
+ 
+当然如果自己动手能力总是遇到各种问题了，那么没关系。我已经开发小程序，欢迎大家试用!
+![avatar](img/005.png)
+
+如果感兴趣想一起搞事情，欢迎联系我![avatar](img/004.png)
+
+
+* 之前有issue反应，因为不同红球模型预测会有重复号码出现，所以将红球序列整体作为一个序列模型看待，推翻之前红球之间相互独立设定，
 因为序列模型预测要引入crf层，相关API必须在 tf.compat.v1.disable_eager_execution()下，故整个模型采用 1.x 构建和训练模式，
 在 2.x 的tensorflow中 tf.compat.v1.XXX 保留了 1.x 的接口方式。
 

@@ -13,7 +13,7 @@ def get_current_number():
     """ 获取最新一期数字
     :return: int
     """
-    r = requests.get("{}{}".format(URL, "history.shtml"))
+    r = requests.get("{}{}".format(URL, "history.shtml"), verify=False)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
     current_num = soup.find("div", class_="wrap_datachart").find("input", id="end")["value"]

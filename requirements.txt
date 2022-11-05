@@ -2,6 +2,7 @@ Flask==1.1.2
 tensorflow-cpu==2.6.1
 tensorflow-addons==0.10.0
 requests==2.22.0
+keras==2.6.0
 beautifulsoup4==4.9.3
 pandas==1.0.0
 numpy==1.19.5
