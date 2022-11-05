@@ -28,7 +28,7 @@ def spider(start, end, mode):
     :return:
     """
     url = "{}{}{}".format(URL, path.format(start), end)
-    r = requests.get(url=url)
+    r = requests.get(url=url, verify=False)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
     trs = soup.find("tbody", attrs={"id": "tdata"}).find_all("tr")
