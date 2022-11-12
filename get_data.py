@@ -6,7 +6,9 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from loguru import logger
-from config import *
+from config import os
+from config import URL, path
+from config import train_data_file, train_data_path
 
 
 def get_current_number():
@@ -56,6 +58,7 @@ def spider(start, end, mode):
     if mode == "train":
         df = pd.DataFrame(data)
         df.to_csv("{}{}".format(train_data_path, train_data_file), encoding="utf-8")
+        return pd.DataFrame(data)
     elif mode == "predict":
         return pd.DataFrame(data)
 
@@ -65,8 +68,8 @@ if __name__ == "__main__":
     logger.info("正在获取数据。。。")
     if not os.path.exists(train_data_path):
         os.mkdir(train_data_path)
-    spider(1, get_current_number(), "train")
+    data = spider(1, get_current_number(), "train")
     if "data" in os.listdir(os.getcwd()):
-        logger.info("data is be ready, next start training model...")
+        logger.info("数据准备就绪，共{}期, 下一步可训练模型...".format(len(data)))
     else:
-        logger.error("data file is not exist1")
+        logger.error("数据文件不存在！")

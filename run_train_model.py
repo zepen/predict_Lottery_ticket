@@ -13,19 +13,11 @@ from loguru import logger
 pred_key = {}
 DATA = pd.read_csv("{}{}".format(train_data_path, train_data_file))
 if not len(DATA):
-    raise logger.error(" 请执行 get_train_data.py 进行数据下载！")
+    raise logger.error(" 请执行 get_data.py 进行数据下载！")
 else:
     # 创建模型文件夹
     if not os.path.exists(model_path):
         os.mkdir(model_path)
-    # 创建日志文件夹
-    if not os.path.exists(log_path):
-        os.mkdir(log_path)
-    # 创建日志文件
-    # if not os.path.exists(access_log):
-    #     os.mknod(access_log)
-    # if not os.path.exists(error_log):
-    #     os.mknod(error_log)
     logger.info("训练数据已加载! ")
 
 
@@ -40,7 +32,7 @@ def create_train_data(name, windows, ball_num=6):
         data = DATA[["{}号码_{}".format(name, num + 1) for num in range(ball_num)]].values
     else:
         data = DATA[[name]].values
-    print("[INFO] data shape: {}".format(data.shape))
+    logger.info("data shape: {}".format(data.shape))
     x_data, y_data = [], []
     for i in range(len(data) - windows - 1):
         sub_data = data[i:(i+windows+1), :]
@@ -63,8 +55,8 @@ def train_model(x_data, y_data, b_name):
         x_data = x_data - 1
         y_data = y_data - 1
         data_len = x_data.shape[0]
-        print("[INFO] The x_data shape is {}".format(x_data.shape))
-        print("[INFO] The y_data shape is {}".format(y_data.shape))
+        logger.info("The x_data shape is {}".format(x_data.shape))
+        logger.info("The y_data shape is {}".format(y_data.shape))
         with tf.compat.v1.Session() as sess:
             red_ball_model = RedBallModel(
                 batch_size=batch_size,
@@ -95,7 +87,7 @@ def train_model(x_data, y_data, b_name):
                         "sequence_length:0": np.array([sequence_len]*1)
                     })
                     if i % 100 == 0:
-                        print("[INFO] epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                        logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
                         )
             pred_key[b_name] = red_ball_model.pred_sequence.name
@@ -109,8 +101,8 @@ def train_model(x_data, y_data, b_name):
         x_data = x_data - 1
         data_len = x_data.shape[0]
         y_data = tf.keras.utils.to_categorical(y_data - 1, num_classes=blue_n_class)
-        print("[INFO] The x_data shape is {}".format(x_data.shape))
-        print("[INFO] The y_data shape is {}".format(y_data.shape))
+        logger.info("The x_data shape is {}".format(x_data.shape))
+        logger.info("The y_data shape is {}".format(y_data.shape))
         with tf.compat.v1.Session() as sess:
             blue_ball_model = BlueBallModel(
                 batch_size=batch_size,
@@ -139,7 +131,7 @@ def train_model(x_data, y_data, b_name):
                         "blue_tag_indices:0": y_data[i:(i+1), :],
                     })
                     if i % 100 == 0:
-                        print("[INFO] epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                        logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
                         )
             pred_key[b_name] = blue_ball_model.pred_label.name

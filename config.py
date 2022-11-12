@@ -4,9 +4,6 @@ Author: BigCat
 """
 import os
 
-URL = "https://datachart.500.com/ssq/history/"
-path = "newinc/history.php?start={}&end="
-
 BOLL_NAME = [
     ("红球", "red"),
     ("蓝球", "blue")
@@ -14,6 +11,9 @@ BOLL_NAME = [
 
 train_data_path = "data/"
 train_data_file = "data.csv"
+
+URL = "https://datachart.500.com/ssq/history/"
+path = "newinc/history.php?start={}&end="
 
 # 模型相关参数
 windows_size = 3
@@ -50,8 +50,3 @@ pred_key_name = "key_name.json"
 red_ball_model_name = "red_ball_model"
 blue_ball_model_name = "blue_ball_model"
 extension = "ckpt"
-
-# 日志路径
-log_path = os.getcwd() + "/logs/"
-access_log = log_path + "access.log"
-error_log = log_path + "error.log"

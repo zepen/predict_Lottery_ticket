@@ -8,8 +8,7 @@ import datetime
 import numpy as np
 import tensorflow as tf
 from config import *
-from flask import Flask
-from get_train_data import get_current_number, spider
+from get_data import get_current_number, spider
 from loguru import logger
 
 # 关闭eager模式
@@ -33,8 +32,6 @@ logger.info("已加载蓝球模型！")
 with open("{}{}".format(model_path, pred_key_name)) as f:
     pred_key_d = json.load(f)
 
-app = Flask(__name__)
-
 
 def get_year():
     """ 截取年份
@@ -44,26 +41,30 @@ def get_year():
     return int(str(datetime.datetime.now().year)[-2:])
 
 
-@app.route('/')
-def main():
-    return "Welcome to use!"
-
-
-@app.route('/predict_api', methods=['GET'])
-def get_predict_result():
-    diff_number = windows_size - 1
-    data = spider(str(int(get_current_number()) - diff_number), get_current_number(), "predict")
-    red_name_list = [(BOLL_NAME[0], i + 1) for i in range(sequence_len)]
-    red_data = data[["{}号码_{}".format(name[0], i) for name, i in red_name_list]].values.astype(int) - 1
-    blue_data = data[[BOLL_NAME[1][0]]].values.astype(int) - 1
-    if len(data) != 3:
-        print("[WARN] 期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")
+def try_error(predict_features):
+    """ 处理异常
+    :param predict_features:
+    :return:
+    """
+    if len(predict_features) != 3:
+        logger.warning("期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")
         last_current_year = (get_year() - 1) * 1000
         max_times = 160
-        while len(data) != 3:
-            data = spider(last_current_year + max_times, get_current_number(), "predict")[[x[0] for x in BOLL_NAME]]
+        while len(predict_features) != 3:
+            predict_features = spider(last_current_year + max_times, get_current_number(), "predict")[[x[0] for x in BOLL_NAME]]
             time.sleep(np.random.random(1).tolist()[0])
             max_times -= 1
+        return predict_features
+    return predict_features
+
+
+def get_red_ball_predict_result(predict_features):
+    """ 获取红球预测结果
+    :param predict_features: 预测特征
+    :return:
+    """
+    red_name_list = [(BOLL_NAME[0], i + 1) for i in range(sequence_len)]
+    red_data = predict_features[["{}号码_{}".format(name[0], i) for name, i in red_name_list]].values.astype(int) - 1
     # 预测红球
     with red_graph.as_default():
         reverse_sequence = tf.compat.v1.get_default_graph().get_tensor_by_name(pred_key_d[BOLL_NAME[0][0]])
@@ -71,14 +72,29 @@ def get_predict_result():
             "red_inputs:0": red_data.reshape(batch_size, windows_size, sequence_len),
             "sequence_length:0": np.array([sequence_len] * 1)
         })
-    # 预测蓝球
+    return red_pred, red_name_list
+
+
+def get_blue_ball_predict_result(predict_features):
+    """ 获取蓝球预测结果
+    :return:
+    """
+    blue_data = predict_features[[BOLL_NAME[1][0]]].values.astype(int) - 1
     with blue_graph.as_default():
         softmax = tf.compat.v1.get_default_graph().get_tensor_by_name(pred_key_d[BOLL_NAME[1][0]])
         blue_pred = blue_sess.run(softmax, feed_dict={
             "blue_inputs:0": blue_data.reshape(batch_size, windows_size)
         })
-    # 拼接结果
-    ball_name_list = ["{}_{}".format(name[1], i) for name, i in red_name_list] + [BOLL_NAME[1][1]]
+    return blue_pred
+
+
+def get_final_result(predict_features):
+    """
+    :return:
+    """
+    red_pred, red_name_list = get_red_ball_predict_result(predict_features)
+    blue_pred = get_blue_ball_predict_result(predict_features)
+    ball_name_list = ["{}_{}".format(name[0], i) for name, i in red_name_list] + [BOLL_NAME[1][0]]
     pred_result_list = red_pred[0].tolist() + blue_pred.tolist()
     return json.dumps(
         {b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)}
@@ -86,4 +102,8 @@ def get_predict_result():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    diff_number = windows_size - 1
+    data = spider(str(int(get_current_number()) - diff_number), get_current_number(), "predict")
+    logger.info("预测期号：{}".format(int(get_current_number()) + 1))
+    predict_features_ = try_error(data)
+    logger.info("预测结果：{}".format(get_final_result(predict_features_)))
