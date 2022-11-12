@@ -7,9 +7,10 @@
 
 有问题，欢迎联系我（QQ: 270393749，客服群号：246714623）
 
-个人微信号
+公众号
 
-![avatar](img/wexin.png)
+![avatar](img/gzh.png)
+
 
 ## Installing
         
