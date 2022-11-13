@@ -32,6 +32,9 @@ logger.info("已加载蓝球模型！")
 with open("{}{}".format(model_path, pred_key_name)) as f:
     pred_key_d = json.load(f)
 
+current_number = get_current_number()
+logger.info("最近一期:{}".format(current_number))
+
 
 def get_year():
     """ 截取年份
@@ -46,7 +49,7 @@ def try_error(predict_features):
     :param predict_features:
     :return:
     """
-    if len(predict_features) != 3:
+    if len(predict_features) != windows_size:
         logger.warning("期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")
         last_current_year = (get_year() - 1) * 1000
         max_times = 160
@@ -105,7 +108,7 @@ def get_final_result(predict_features, mode=0):
 
 if __name__ == '__main__':
     diff_number = windows_size - 1
-    data = spider(str(int(get_current_number()) - diff_number), get_current_number(), "predict")
-    logger.info("预测期号：{}".format(int(get_current_number()) + 1))
+    data = spider(str(int(current_number) - diff_number), current_number, "predict")
+    logger.info("预测期号：{}".format(int(current_number) + 1))
     predict_features_ = try_error(data)
     logger.info("预测结果：{}".format(get_final_result(predict_features_)))
