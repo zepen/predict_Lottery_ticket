@@ -64,11 +64,12 @@ def spider(start, end, mode):
 
 
 if __name__ == "__main__":
-    logger.info("最新一期期号：{}".format(get_current_number()))
+    current_number = get_current_number()
+    logger.info("最新一期期号：{}".format(current_number))
     logger.info("正在获取数据。。。")
     if not os.path.exists(train_data_path):
         os.mkdir(train_data_path)
-    data = spider(1, get_current_number(), "train")
+    data = spider(1, current_number, "train")
     if "data" in os.listdir(os.getcwd()):
         logger.info("数据准备就绪，共{}期, 下一步可训练模型...".format(len(data)))
     else:
