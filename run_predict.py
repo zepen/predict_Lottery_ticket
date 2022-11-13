@@ -88,17 +88,19 @@ def get_blue_ball_predict_result(predict_features):
     return blue_pred
 
 
-def get_final_result(predict_features):
-    """
+def get_final_result(predict_features, mode=0):
+    """" 最终预测函数
+    :param predict_features: 预测特征
+    :param mode: 模式，0：离线，1：在线api
     :return:
     """
     red_pred, red_name_list = get_red_ball_predict_result(predict_features)
     blue_pred = get_blue_ball_predict_result(predict_features)
-    ball_name_list = ["{}_{}".format(name[0], i) for name, i in red_name_list] + [BOLL_NAME[1][0]]
+    ball_name_list = ["{}_{}".format(name[mode], i) for name, i in red_name_list] + [BOLL_NAME[1][mode]]
     pred_result_list = red_pred[0].tolist() + blue_pred.tolist()
-    return json.dumps(
-        {b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)}
-    ).encode('utf-8').decode('unicode_escape')
+    return {
+        b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)
+    }
 
 
 if __name__ == '__main__':
