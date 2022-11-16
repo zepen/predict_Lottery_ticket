@@ -1,4 +1,4 @@
-# 双色球彩票AI预测
+# 双色球+大乐透彩票AI预测
 
 介于越来越多的盆友关心本项目，本人将预测系统制作成了小程序，供大家娱乐使用，再不用担心程序调试出bug啦！
 后续会不断优化迭代，也欢迎在issue中提出宝贵建议！
@@ -25,22 +25,25 @@
 ## Getting Started
 
 ```python
-python get_data.py  # 执行获取训练数据
+python get_data.py  --name ssq  # 执行获取双色球训练数据
 ```
 如果出现解析错误，应该看看网页 http://datachart.500.com/ssq/history/newinc/history.php 是否可以正常访问
+若要大乐透，替换参数 --name dlt 即可
 
 ```python
-python run_train_model.py  # 执行训练模型
+python run_train_model.py --name ssq  # 执行训练双色球模型
 ``` 
 开始模型训练，先训练红球模型，再训练蓝球模型，模型参数和超参数在 config.py 文件中自行配置
 具体训练时间消耗与模型参数和超参数相关。
 
 ```python
-python run_predict.py  # 执行模型预测
+python run_predict.py  --name ssq # 执行双色球模型预测
 ```
 预测结果会打印在控制台
 
 ## Update
+
+* 有盆友反馈想要个大乐透的预测玩法，加入对大乐透的数据爬取，模型训练，模型预测等功能，通过传入执行参数 --name dlt即可。
 
 * 为了降低本项目的使用门槛，废弃docker模式和微服务，按照Getting Started执行脚本，即可获取预测结果。
 

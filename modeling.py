@@ -10,14 +10,16 @@ tf.compat.v1.disable_eager_execution()
 tf.compat.v1.experimental.output_all_intermediates(True)
 
 
-class RedBallModel(object):
+class LstmWithCRFModel(object):
+    """ lstm + crf解码模型
+    """
 
     def __init__(self, batch_size, n_class, ball_num, w_size, embedding_size, words_size, hidden_size, layer_size):
         self._inputs = tf.keras.layers.Input(
-            shape=(w_size, ball_num), batch_size=batch_size, name="red_inputs"
+            shape=(w_size, ball_num), batch_size=batch_size, name="inputs"
         )
         self._tag_indices = tf.keras.layers.Input(
-            shape=(ball_num, ), batch_size=batch_size, dtype=tf.int32, name="red_tag_indices"
+            shape=(ball_num, ), batch_size=batch_size, dtype=tf.int32, name="tag_indices"
         )
         self._sequence_length = tf.keras.layers.Input(
             shape=(), batch_size=batch_size, dtype=tf.int32, name="sequence_length"
@@ -71,14 +73,16 @@ class RedBallModel(object):
         return self._pred_sequence
 
 
-class BlueBallModel(object):
+class SignalLstmModel(object):
+    """ 单向lstm序列模型
+    """
 
     def __init__(self, batch_size, n_class, w_size, embedding_size, hidden_size, outputs_size, layer_size):
         self._inputs = tf.keras.layers.Input(
-            shape=(w_size, ), batch_size=batch_size, dtype=tf.int32, name="blue_inputs"
+            shape=(w_size, ), batch_size=batch_size, dtype=tf.int32, name="inputs"
         )
         self._tag_indices = tf.keras.layers.Input(
-            shape=(n_class, ), batch_size=batch_size, dtype=tf.float32, name="blue_tag_indices"
+            shape=(n_class, ), batch_size=batch_size, dtype=tf.float32, name="tag_indices"
         )
         embedding = tf.keras.layers.Embedding(outputs_size, embedding_size)(self._inputs)
         lstm = tf.keras.layers.LSTM(hidden_size, return_sequences=True)(embedding)
