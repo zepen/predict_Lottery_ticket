@@ -99,6 +99,11 @@ def train_red_ball_model(name, x_data, y_data):
                     logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
                         epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
                     )
+            pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
+            if not os.path.exists(m_args["path"]["red"]):
+                os.makedirs(m_args["path"]["red"])
+            saver = tf.compat.v1.train.Saver()
+            saver.save(sess, "{}{}.{}".format(m_args["path"]["red"], red_ball_model_name, extension))
         pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
         if not os.path.exists(m_args["path"]["red"]):
             os.makedirs(m_args["path"]["red"])
@@ -177,6 +182,11 @@ def train_blue_ball_model(name, x_data, y_data):
                         logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             epoch, loss_, y_data[i:(i + 1), :][0] + 1, pred[0] + 1)
                         )
+            pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
+            if not os.path.exists(m_args["path"]["blue"]):
+                os.mkdir(m_args["path"]["blue"])
+            saver = tf.compat.v1.train.Saver()
+            saver.save(sess, "{}{}.{}".format(m_args["path"]["blue"], blue_ball_model_name, extension))
         pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
         if not os.path.exists(m_args["path"]["blue"]):
             os.mkdir(m_args["path"]["blue"])
