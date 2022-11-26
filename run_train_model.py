@@ -85,6 +85,10 @@ def train_red_ball_model(name, x_data, y_data):
             name='Adam'
         ).minimize(red_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
+        if os.path.exists(m_args["path"]["red"]):
+            saver = tf.compat.v1.train.Saver()
+            saver.restore(sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
+            logger.info("已加载红球模型！")
         for epoch in range(m_args["model_args"]["red_epochs"]):
             for i in range(data_len):
                 _, loss_, pred = sess.run([
@@ -157,6 +161,10 @@ def train_blue_ball_model(name, x_data, y_data):
             name='Adam'
         ).minimize(blue_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
+        if os.path.exists(m_args["path"]["blue"]):
+            saver = tf.compat.v1.train.Saver()
+            saver.restore(sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
+            logger.info("已加载蓝球模型！")
         for epoch in range(m_args["model_args"]["blue_epochs"]):
             for i in range(data_len):
                 if name == "ssq":
