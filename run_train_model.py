@@ -102,8 +102,8 @@ def train_red_ball_model(name, x_data, y_data):
                         if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*1)
                 })
                 if i % 100 == 0:
-                    logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                        epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
+                    logger.info("w_size:{},epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                        str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
                     )
             pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
             if not os.path.exists(syspath):
@@ -178,8 +178,8 @@ def train_blue_ball_model(name, x_data, y_data):
                         "tag_indices:0": y_data[i:(i+1), :],
                     })
                     if i % 100 == 0:
-                        logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                            epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
+                        logger.info("w_size:{}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                            str(m_args["model_args"]["windows_size"]), epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
                         )
                 else:
                     _, loss_, pred = sess.run([
@@ -190,8 +190,8 @@ def train_blue_ball_model(name, x_data, y_data):
                         "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * 1)
                     })
                     if i % 100 == 0:
-                        logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                            epoch, loss_, y_data[i:(i + 1), :][0] + 1, pred[0] + 1)
+                        logger.info("w_size:{}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                            str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i + 1), :][0] + 1, pred[0] + 1)
                         )
             pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
             if not os.path.exists(syspath):
