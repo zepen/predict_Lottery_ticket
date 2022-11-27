@@ -1,6 +1,15 @@
 # 双色球+大乐透彩票AI预测
 
-基于https://github.com/zepen/predict_Lottery_ticket 修改
+介于越来越多的盆友关心本项目，本人将预测系统制作成了小程序，供大家娱乐使用，再不用担心程序调试出bug啦！
+后续会不断优化迭代，也欢迎在issue中提出宝贵建议！
+
+![avatar](img/xcx.png)
+
+有问题，欢迎联系我（QQ: 270393749，客服群号：246714623）
+
+公众号
+
+![avatar](img/gzh.png)
 
 
 ## Installing
