@@ -14,62 +14,76 @@ from loguru import logger
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用/'，/'隔开")
 args = parser.parse_args()
 
 # 关闭eager模式
 tf.compat.v1.disable_eager_execution()
 
-if args.name == "ssq":
-    red_graph = tf.compat.v1.Graph()
-    with red_graph.as_default():
-        red_saver = tf.compat.v1.train.import_meta_graph(
-            "{}red_ball_model.ckpt.meta".format(model_args[args.name]["path"]["red"])
-        )
-    red_sess = tf.compat.v1.Session(graph=red_graph)
-    red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
-    logger.info("已加载红球模型！")
+red_graph = tf.compat.v1.Graph()
+blue_graph = tf.compat.v1.Graph()
+pred_key_d = {}
+red_sess = tf.compat.v1.Session(graph=red_graph)
+blue_sess = tf.compat.v1.Session(graph=blue_graph)
+current_number = get_current_number(args.name)
 
-    blue_graph = tf.compat.v1.Graph()
-    with blue_graph.as_default():
-        blue_saver = tf.compat.v1.train.import_meta_graph(
-            "{}blue_ball_model.ckpt.meta".format(model_args[args.name]["path"]["blue"])
-        )
-    blue_sess = tf.compat.v1.Session(graph=blue_graph)
-    blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
-    logger.info("已加载蓝球模型！")
+def run_predict(window_size):
+    global pred_key_d, red_graph, blue_graph, red_sess, blue_sess, current_number
+    if window_size != 0:
+        model_args[args.name]["model_args"]["windows_size"] = window_size
+    redpath = model_path + model_args[args.name]["pathname"]['name'] + str(model_args[args.name]["model_args"]["windows_size"]) + model_args[args.name]["subpath"]['red']
+    bluepath = model_path + model_args[args.name]["pathname"]['name'] + str(model_args[args.name]["model_args"]["windows_size"]) + model_args[args.name]["subpath"]['blue']
+    if args.name == "ssq":
+        red_graph = tf.compat.v1.Graph()
+        with red_graph.as_default():
+            red_saver = tf.compat.v1.train.import_meta_graph(
+                "{}red_ball_model.ckpt.meta".format(redpath)
+            )
+        red_sess = tf.compat.v1.Session(graph=red_graph)
+        red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(redpath))
+        logger.info("已加载红球模型！窗口大小:{}".format(model_args[args.name]["model_args"]["windows_size"]))
 
-    # 加载关键节点名
-    with open("{}/{}/{}".format(model_path, args.name, pred_key_name)) as f:
-        pred_key_d = json.load(f)
+        blue_graph = tf.compat.v1.Graph()
+        with blue_graph.as_default():
+            blue_saver = tf.compat.v1.train.import_meta_graph(
+                "{}blue_ball_model.ckpt.meta".format(bluepath)
+            )
+        blue_sess = tf.compat.v1.Session(graph=blue_graph)
+        blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(bluepath))
+        logger.info("已加载蓝球模型！窗口大小:{}".format(model_args[args.name]["model_args"]["windows_size"]))
 
-    current_number = get_current_number(args.name)
-    logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
+        # 加载关键节点名
+        with open("{}/{}/{}".format(model_path, args.name, pred_key_name)) as f:
+            pred_key_d = json.load(f)
 
-else:
-    red_graph = tf.compat.v1.Graph()
-    with red_graph.as_default():
-        red_saver = tf.compat.v1.train.import_meta_graph(
-            "{}red_ball_model.ckpt.meta".format(model_args[args.name]["path"]["red"])
-        )
-    red_sess = tf.compat.v1.Session(graph=red_graph)
-    red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
-    logger.info("已加载红球模型！")
+        current_number = get_current_number(args.name)
+        logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
 
-    blue_graph = tf.compat.v1.Graph()
-    with blue_graph.as_default():
-        blue_saver = tf.compat.v1.train.import_meta_graph(
-            "{}blue_ball_model.ckpt.meta".format(model_args[args.name]["path"]["blue"])
-        )
-    blue_sess = tf.compat.v1.Session(graph=blue_graph)
-    blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
-    logger.info("已加载蓝球模型！")
+    else:
+        red_graph = tf.compat.v1.Graph()
+        with red_graph.as_default():
+            red_saver = tf.compat.v1.train.import_meta_graph(
+                "{}red_ball_model.ckpt.meta".format(redpath)
+            )
+        red_sess = tf.compat.v1.Session(graph=red_graph)
+        red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(redpath))
+        logger.info("已加载红球模型！窗口大小:{}".format(model_args[args.name]["model_args"]["windows_size"]))
 
-    # 加载关键节点名
-    with open("{}/{}/{}".format(model_path,args.name , pred_key_name)) as f:
-        pred_key_d = json.load(f)
+        blue_graph = tf.compat.v1.Graph()
+        with blue_graph.as_default():
+            blue_saver = tf.compat.v1.train.import_meta_graph(
+                "{}blue_ball_model.ckpt.meta".format(bluepath)
+            )
+        blue_sess = tf.compat.v1.Session(graph=blue_graph)
+        blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(bluepath))
+        logger.info("已加载蓝球模型！窗口大小:{}".format(model_args[args.name]["model_args"]["windows_size"]))
 
-    current_number = get_current_number(args.name)
-    logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
+        # 加载关键节点名
+        with open("{}/{}/{}".format(model_path,args.name , pred_key_name)) as f:
+            pred_key_d = json.load(f)
+
+        current_number = get_current_number(args.name)
+        logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
 
 
 def get_year():
@@ -158,7 +172,7 @@ def run(name):
     windows_size = model_args[name]["model_args"]["windows_size"]
     diff_number = windows_size - 1
     data = spider(name, str(int(current_number) - diff_number), current_number, "predict")
-    logger.info("【{}】预测期号：{}".format(name_path[name]["name"], int(current_number) + 1))
+    logger.info("【{}】预测期号：{} 窗口大小:{}".format(name_path[name]["name"], int(current_number) + 1, windows_size))
     predict_features_ = try_error(name, data, windows_size)
     logger.info("预测结果：{}".format(get_final_result(name, predict_features_)))
 
@@ -166,5 +180,12 @@ def run(name):
 if __name__ == '__main__':
     if not args.name:
         raise Exception("玩法名称不能为空！")
+    elif not args.windows_size:
+        raise Exception("窗口大小不能为空！")
     else:
-        run(args.name)
+        list_windows_size = args.windows_size.split(",")
+        for size in list_windows_size:
+            tf.compat.v1.reset_default_graph()
+            run_predict(int(size))
+            run(args.name)
+        

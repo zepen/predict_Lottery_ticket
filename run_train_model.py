@@ -13,6 +13,7 @@ from loguru import logger
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用/'，/'隔开")
 args = parser.parse_args()
 
 pred_key = {}
@@ -85,9 +86,10 @@ def train_red_ball_model(name, x_data, y_data):
             name='Adam'
         ).minimize(red_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
-        if os.path.exists(m_args["path"]["red"]):
+        syspath = model_path + model_args[args.name]["pathname"]['name'] + str(m_args["model_args"]["windows_size"]) + model_args[args.name]["subpath"]['red']
+        if os.path.exists(syspath):
             saver = tf.compat.v1.train.Saver()
-            saver.restore(sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
+            saver.restore(sess, "{}red_ball_model.ckpt".format(syspath))
             logger.info("已加载红球模型！")
         for epoch in range(m_args["model_args"]["red_epochs"]):
             for i in range(data_len):
@@ -104,15 +106,15 @@ def train_red_ball_model(name, x_data, y_data):
                         epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
                     )
             pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
-            if not os.path.exists(m_args["path"]["red"]):
-                os.makedirs(m_args["path"]["red"])
+            if not os.path.exists(syspath):
+                os.makedirs(syspath)
             saver = tf.compat.v1.train.Saver()
-            saver.save(sess, "{}{}.{}".format(m_args["path"]["red"], red_ball_model_name, extension))
+            saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
         pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
-        if not os.path.exists(m_args["path"]["red"]):
-            os.makedirs(m_args["path"]["red"])
+        if not os.path.exists(syspath):
+            os.makedirs(syspath)
         saver = tf.compat.v1.train.Saver()
-        saver.save(sess, "{}{}.{}".format(m_args["path"]["red"], red_ball_model_name, extension))
+        saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
 
 
 def train_blue_ball_model(name, x_data, y_data):
@@ -161,9 +163,10 @@ def train_blue_ball_model(name, x_data, y_data):
             name='Adam'
         ).minimize(blue_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
-        if os.path.exists(m_args["path"]["blue"]):
+        syspath = model_path + model_args[args.name]["pathname"]['name'] + str(m_args["model_args"]["windows_size"]) + model_args[args.name]["subpath"]['blue']
+        if os.path.exists(syspath):
             saver = tf.compat.v1.train.Saver()
-            saver.restore(sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
+            saver.restore(sess, "{}blue_ball_model.ckpt".format(syspath))
             logger.info("已加载蓝球模型！")
         for epoch in range(m_args["model_args"]["blue_epochs"]):
             for i in range(data_len):
@@ -191,22 +194,18 @@ def train_blue_ball_model(name, x_data, y_data):
                             epoch, loss_, y_data[i:(i + 1), :][0] + 1, pred[0] + 1)
                         )
             pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
-            if not os.path.exists(m_args["path"]["blue"]):
-                os.mkdir(m_args["path"]["blue"])
+            if not os.path.exists(syspath):
+                os.mkdir(syspath)
             saver = tf.compat.v1.train.Saver()
-            saver.save(sess, "{}{}.{}".format(m_args["path"]["blue"], blue_ball_model_name, extension))
+            saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
         pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
-        if not os.path.exists(m_args["path"]["blue"]):
-            os.mkdir(m_args["path"]["blue"])
+        if not os.path.exists(syspath):
+            os.mkdir(syspath)
         saver = tf.compat.v1.train.Saver()
-        saver.save(sess, "{}{}.{}".format(m_args["path"]["blue"], blue_ball_model_name, extension))
+        saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
 
-
-def run(name):
-    """ 执行训练
-    :param name: 玩法
-    :return:
-    """
+def action(name):
+    tf.compat.v1.reset_default_graph()
 
     logger.info("正在创建【{}】数据集...".format(name_path[name]["name"]))
     train_data = create_train_data(args.name, model_args[name]["model_args"]["windows_size"])
@@ -227,9 +226,23 @@ def run(name):
     with open("{}/{}/{}".format(model_path, name, pred_key_name), "w") as f:
         json.dump(pred_key, f)
 
+def run(name, windows_size):
+    """ 执行训练
+    :param name: 玩法
+    :return:
+    """
+    if int(windows_size[0]) == 0:
+        action(name)
+    else:
+        for size in windows_size:
+            model_args[name]["model_args"]["windows_size"] = int(size)
+            action(name)
 
 if __name__ == '__main__':
+    list_windows_size = args.windows_size.split(",")
     if not args.name:
         raise Exception("玩法名称不能为空！")
+    elif not args.windows_size:
+        raise Exception("窗口大小不能为空！")
     else:
-        run(args.name)
+        run(args.name, list_windows_size)
