@@ -14,6 +14,8 @@ from loguru import logger
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
+parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
 args = parser.parse_args()
 
 pred_key = {}
@@ -245,4 +247,6 @@ if __name__ == '__main__':
     elif not args.windows_size:
         raise Exception("窗口大小不能为空！")
     else:
+        model_args[args.name]["model_args"]["red_epochs"] = int(args.red_epochs)
+        model_args[args.name]["model_args"]["blue_epochs"] = int(args.blue_epochs)
         run(args.name, list_windows_size)
