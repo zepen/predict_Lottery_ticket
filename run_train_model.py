@@ -97,6 +97,7 @@ def train_red_ball_model(name, x_data, y_data):
             saver.restore(sess, "{}red_ball_model.ckpt".format(syspath))
             logger.info("已加载红球模型！")
         for epoch in range(m_args["model_args"]["red_epochs"]):
+            epoch_start_time = time.time()
             for i in range(data_len):
                 _, loss_, pred = sess.run([
                     train_step, red_ball_model.loss, red_ball_model.pred_sequence
@@ -110,6 +111,7 @@ def train_red_ball_model(name, x_data, y_data):
                     logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                         str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
                     )
+            logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
             pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
             if not os.path.exists(syspath):
                 os.makedirs(syspath)
@@ -174,6 +176,7 @@ def train_blue_ball_model(name, x_data, y_data):
             saver.restore(sess, "{}blue_ball_model.ckpt".format(syspath))
             logger.info("已加载蓝球模型！")
         for epoch in range(m_args["model_args"]["blue_epochs"]):
+            epoch_start_time = time.time()
             for i in range(data_len):
                 if name == "ssq":
                     _, loss_, pred = sess.run([
@@ -198,6 +201,7 @@ def train_blue_ball_model(name, x_data, y_data):
                         logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i + 1), :][0] + 1, pred[0] + 1)
                         )
+            logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1)))
             pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
             if not os.path.exists(syspath):
                 os.mkdir(syspath)
