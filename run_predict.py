@@ -8,18 +8,21 @@ import time
 import datetime
 import numpy as np
 import tensorflow as tf
+import warnings
 from config import *
 # from get_data import get_current_number, spider
 from loguru import logger
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
-parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--name', default="dlt", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--windows_size', default='3,5,10,30,50', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 args = parser.parse_args()
 
 # 关闭eager模式
 tf.compat.v1.disable_eager_execution()
+
+warnings.filterwarnings('ignore')
 
 red_graph = tf.compat.v1.Graph()
 blue_graph = tf.compat.v1.Graph()
