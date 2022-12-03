@@ -15,7 +15,7 @@ from loguru import logger
 warnings.filterwarnings('ignore')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--name', default="dlt", type=str, help="选择训练数据: 双色球/大乐透")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
@@ -133,10 +133,11 @@ def train_blue_ball_model(name, x_data, y_data):
     """
     m_args = model_args[name]
     x_data = x_data - 1
+    y_data = y_data - 1
     data_len = x_data.shape[0]
     if name == "ssq":
         x_data = x_data.reshape(len(x_data), m_args["model_args"]["windows_size"])
-        y_data = tf.keras.utils.to_categorical(y_data - 1, num_classes=m_args["model_args"]["blue_n_class"])
+        y_data = tf.keras.utils.to_categorical(y_data, num_classes=m_args["model_args"]["blue_n_class"])
     logger.info("特征数据维度: {}".format(x_data.shape))
     logger.info("标签数据维度: {}".format(y_data.shape))
     with tf.compat.v1.Session() as sess:
