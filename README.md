@@ -1,6 +1,7 @@
 # 双色球+大乐透彩票AI预测
 
-核心代码 fork 自：https://github.com/zepen/predict_Lottery_ticket，并按照我的思路进行了增强。
+核心代码 fork 自：https://github.com/zepen/predict_Lottery_ticket
+并按照我的思路进行了增强。
 
 ## Installing
         
