@@ -1,4 +1,4 @@
-# 双色球+大乐透彩票AI预测
+# 彩票AI预测（目前支持双色球，大乐透，排列三）
 
 核心代码 fork 自：https://github.com/zepen/predict_Lottery_ticket
 并按照我的思路进行了增强。
@@ -24,11 +24,14 @@ python get_data.py  --name ssq  # 执行获取双色球训练数据
 若要大乐透，替换参数 --name dlt 即可
 
 ```python
-python run_train_model.py --name ssq  --windows_size 3,5,7  # 执行训练双色球模型
+python run_train_model.py --name ssq  --windows_size 3,5,7 --red_epochs 1 --blue_epochs 1 --batch_size 1  # 执行训练双色球模型
 ``` 
 开始模型训练，先训练红球模型，再训练蓝球模型，模型参数和超参数在 config.py 文件中自行配置
 具体训练时间消耗与模型参数和超参数相关。
 若要多个窗口尺寸依次训练，替换参数 --windows_size 3,5,7 即可
+red_epochs 为红球训练次数
+blue_epochs 为篮球训练次数
+batch_size 为每轮训练的数量
 
 ```python
 python run_predict.py  --name ssq --windows_size 3,5,7  # 执行双色球模型预测
