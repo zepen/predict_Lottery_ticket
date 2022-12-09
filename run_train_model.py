@@ -138,11 +138,11 @@ def train_red_ball_model(name, x_data, y_data):
                 os.makedirs(syspath)
             saver = tf.compat.v1.train.Saver()
             saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
-        pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
-        if not os.path.exists(syspath):
-            os.makedirs(syspath)
-        saver = tf.compat.v1.train.Saver()
-        saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
+        # pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
+        # if not os.path.exists(syspath):
+        #     os.makedirs(syspath)
+        # saver = tf.compat.v1.train.Saver()
+        # saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
 
 
 def train_blue_ball_model(name, x_data, y_data):
@@ -229,11 +229,11 @@ def train_blue_ball_model(name, x_data, y_data):
                 os.mkdir(syspath)
             saver = tf.compat.v1.train.Saver()
             saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
-        pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
-        if not os.path.exists(syspath):
-            os.mkdir(syspath)
-        saver = tf.compat.v1.train.Saver()
-        saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
+        # pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
+        # if not os.path.exists(syspath):
+        #     os.mkdir(syspath)
+        # saver = tf.compat.v1.train.Saver()
+        # saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
 
 def action(name):
     tf.compat.v1.reset_default_graph()
