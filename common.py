@@ -14,9 +14,9 @@ def get_url(name):
     :return:
     """
     url = "https://datachart.500.com/{}/history/".format(name)
-    path = "newinc/history.php?start={}&end="
+    path = "newinc/history.php?start={}&end={}"
     if name == "qxc" or name == "pls":
-        path = "inc/history.php?start={}&end=&limit=-1"
+        path = "inc/history.php?start={}&end={}&limit={}"
     return url, path
 
 def get_current_number(name):
@@ -34,7 +34,7 @@ def get_current_number(name):
     return current_num
 
 
-def spider(name, start, end, mode):
+def spider(name="ssq", start=1, end=999999, mode="train"):
     """ 爬取历史数据
     :param name 玩法
     :param start 开始一期
@@ -43,7 +43,8 @@ def spider(name, start, end, mode):
     :return:
     """
     url, path = get_url(name)
-    url = "{}{}{}".format(url, path.format(start), end)
+    limit = int(end) - int(start) + 1
+    url = "{}{}".format(url, path.format(int(start), int(end), limit))
     r = requests.get(url=url, verify=False)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")

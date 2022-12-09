@@ -9,7 +9,7 @@ from config import os, name_path
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="pls", type=str, help="选择爬取数据")
+parser.add_argument('--name', default="ssq", type=str, help="选择爬取数据")
 args = parser.parse_args()
 
 def run(name):

@@ -15,8 +15,8 @@ from loguru import logger
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="dlt", type=str, help="选择训练数据: 双色球/大乐透")
-parser.add_argument('--windows_size', default='3,5,10,30,50', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--name', default="pls", type=str, help="选择训练数据")
+parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 args = parser.parse_args()
 
 # 关闭eager模式
@@ -46,7 +46,7 @@ def run_predict(window_size):
         red_sess = tf.compat.v1.Session(graph=red_graph)
         red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(redpath))
         logger.info("已加载红球模型！窗口大小:{}".format(model_args[args.name]["model_args"]["windows_size"]))
-
+    
         blue_graph = tf.compat.v1.Graph()
         with blue_graph.as_default():
             blue_saver = tf.compat.v1.train.import_meta_graph(
@@ -63,7 +63,7 @@ def run_predict(window_size):
         current_number = get_current_number(args.name)
         logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
 
-    else:
+    elif args.name == "dlt":
         red_graph = tf.compat.v1.Graph()
         with red_graph.as_default():
             red_saver = tf.compat.v1.train.import_meta_graph(
@@ -89,6 +89,22 @@ def run_predict(window_size):
         current_number = get_current_number(args.name)
         logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
 
+    elif args.name == "pls":
+        red_graph = tf.compat.v1.Graph()
+        with red_graph.as_default():
+            red_saver = tf.compat.v1.train.import_meta_graph(
+                "{}red_ball_model.ckpt.meta".format(redpath)
+            )
+        red_sess = tf.compat.v1.Session(graph=red_graph)
+        red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(redpath))
+        logger.info("已加载红球模型！窗口大小:{}".format(model_args[args.name]["model_args"]["windows_size"]))
+
+        # 加载关键节点名
+        with open("{}/{}/{}".format(model_path,args.name , pred_key_name)) as f:
+            pred_key_d = json.load(f)
+
+        current_number = get_current_number(args.name)
+        logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
 
 def get_year():
     """ 截取年份
@@ -117,7 +133,11 @@ def get_red_ball_predict_result(predict_features, sequence_len, windows_size):
     """ 获取红球预测结果
     """
     name_list = [(ball_name[0], i + 1) for i in range(sequence_len)]
-    data = predict_features[["{}_{}".format(name[0], i) for name, i in name_list]].values.astype(int) - 1
+    if args.name in ["ssq", "dlt"]:
+        hotfixed = 1
+    elif args.name == "pls":
+        hotfixed = 0
+    data = predict_features[["{}_{}".format(name[0], i) for name, i in name_list]].values.astype(int) - hotfixed
     with red_graph.as_default():
         reverse_sequence = tf.compat.v1.get_default_graph().get_tensor_by_name(pred_key_d[ball_name[0][0]])
         pred = red_sess.run(reverse_sequence, feed_dict={
@@ -162,7 +182,7 @@ def get_final_result(name, predict_features, mode=0):
         return {
             b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)
         }
-    else:
+    elif name == "dlt":
         red_pred, red_name_list = get_red_ball_predict_result(predict_features, m_args["red_sequence_len"], m_args["windows_size"])
         blue_pred, blue_name_list = get_blue_ball_predict_result(name, predict_features, m_args["blue_sequence_len"], m_args["windows_size"])
         ball_name_list = ["{}_{}".format(name[mode], i) for name, i in red_name_list] + ["{}_{}".format(name[mode], i) for name, i in blue_name_list]
@@ -170,7 +190,13 @@ def get_final_result(name, predict_features, mode=0):
         return {
             b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)
         }
-
+    elif name == "pls":
+        red_pred, red_name_list = get_red_ball_predict_result(predict_features, m_args["red_sequence_len"], m_args["windows_size"])
+        ball_name_list = ["{}_{}".format(name[mode], i) for name, i in red_name_list]
+        pred_result_list = red_pred[0].tolist()
+        return {
+            b_name: int(res) for b_name, res in zip(ball_name_list, pred_result_list)
+        }
 
 def run(name):
     windows_size = model_args[name]["model_args"]["windows_size"]
