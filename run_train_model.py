@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 Author: BigCat
+Modifier: KittenCN
 """
 import time
 import json
@@ -16,9 +17,9 @@ from loguru import logger
 warnings.filterwarnings('ignore')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="pls", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--name', default="pls", type=str, help="选择训练数据")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
-parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
+parser.add_argument('--red_epochs', default=200, type=int, help="红球训练轮数")
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
 args = parser.parse_args()
 

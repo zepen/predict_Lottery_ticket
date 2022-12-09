@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 """
 Author: BigCat
+Modifier: KittenCN
 """
 import tensorflow as tf
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)

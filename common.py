@@ -1,3 +1,7 @@
+# -*- coding:utf-8 -*-
+"""
+Author: KittenCN
+"""
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup

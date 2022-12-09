@@ -1,4 +1,8 @@
 # -*- coding:utf-8 -*-
+"""
+Author: BigCat
+Modifier: KittenCN
+"""
 import argparse
 from loguru import logger
 from config import os, name_path
