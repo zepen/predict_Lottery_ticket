@@ -80,7 +80,7 @@ model_args = {
             "batch_size": 1,
             "red_sequence_len": 6,
             "sequence_len": 6,
-            "red_n_class": 32,
+            "red_n_class": 33,
             "red_epochs": 1,
             "red_embedding_size": 32,
             "red_hidden_size": 32,
