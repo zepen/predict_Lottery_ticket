@@ -1,5 +1,6 @@
-tensorflow-gpu==2.2.*
-tensorflow-addons==0.11.*
+tensorflow-cpu==2.3.*
+# tensorflow-gpu==2.2.*
+tensorflow-addons==0.13.*
 requests
 keras
 beautifulsoup4
