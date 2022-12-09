@@ -19,7 +19,15 @@ name_path = {
     "dlt": {
         "name": "大乐透",
         "path": "data/dlt/"
-    }
+    },
+    "qxc": {
+        "name": "七星彩",
+        "path": "data/qxc/"
+    },
+    "pls": {
+        "name": "排列三",
+        "path": "data/pls/"
+    },
 }
 
 model_path = os.getcwd() + "/model/"

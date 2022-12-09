@@ -1,14 +1,11 @@
 # -*- coding:utf-8 -*-
-"""
-Author: BigCat
-"""
 import argparse
 from loguru import logger
 from config import os, name_path
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="qxc", type=str, help="选择爬取数据: 双色球/大乐透")
+parser.add_argument('--name', default="pls", type=str, help="选择爬取数据")
 args = parser.parse_args()
 
 def run(name):
