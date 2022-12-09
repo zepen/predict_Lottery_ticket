@@ -77,7 +77,7 @@ model_args = {
     "ssq": {
         "model_args": {
             "windows_size": 3,
-            "batch_size": 32,
+            "batch_size": 1,
             "red_sequence_len": 6,
             "sequence_len": 6,
             "red_n_class": 33,
