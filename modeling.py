@@ -3,6 +3,7 @@
 Author: BigCat
 """
 import tensorflow as tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 from tensorflow_addons.text.crf import crf_decode, crf_log_likelihood
 
 # 关闭eager模式

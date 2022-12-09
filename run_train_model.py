@@ -10,19 +10,19 @@ import pandas as pd
 import warnings
 from config import *
 from modeling import LstmWithCRFModel, SignalLstmModel, tf
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 from loguru import logger
 
 warnings.filterwarnings('ignore')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--name', default="pls", type=str, help="选择训练数据: 双色球/大乐透")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
 args = parser.parse_args()
 
 pred_key = {}
-
 
 def create_train_data(name, windows):
     """ 创建训练数据
@@ -47,7 +47,13 @@ def create_train_data(name, windows):
         x_data.append(sub_data[1:])
         y_data.append(sub_data[0])
 
-    cut_num = 6 if name == "ssq" else 5
+    cut_num = 6
+    if name == "ssq":
+        cut_num = 6
+    elif name == "dlt":
+        cut_num = 5
+    elif name == "pls":
+        cut_num = 3
     return {
         "red": {
             "x_data": np.array(x_data)[:, :, :cut_num], "y_data": np.array(y_data)[:, :cut_num]
@@ -66,8 +72,9 @@ def train_red_ball_model(name, x_data, y_data):
     :return:
     """
     m_args = model_args[name]
-    x_data = x_data - 1
-    y_data = y_data - 1
+    if name not in ["pls"]:
+        x_data = x_data - 1
+        y_data = y_data - 1
     data_len = x_data.shape[0]
     logger.info("特征数据维度: {}".format(x_data.shape))
     logger.info("标签数据维度: {}".format(y_data.shape))
@@ -108,8 +115,12 @@ def train_red_ball_model(name, x_data, y_data):
                         if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*1)
                 })
                 if i % 100 == 0:
+                    if name not in ["pls"]:
+                        hotfixed = 1
+                    else:
+                        hotfixed = 0
                     logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                        str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
+                        str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i+1), :][0] + hotfixed, pred[0] + hotfixed)
                     )
             logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
             pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
@@ -225,12 +236,13 @@ def action(name):
     train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
     logger.info("训练耗时: {}".format(time.time() - start_time))
 
-    tf.compat.v1.reset_default_graph()  # 重置网络图
+    if name not in ["pls"]:
+        tf.compat.v1.reset_default_graph()  # 重置网络图
 
-    logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))
-    start_time = time.time()
-    train_blue_ball_model(name, x_data=train_data["blue"]["x_data"], y_data=train_data["blue"]["y_data"])
-    logger.info("训练耗时: {}".format(time.time() - start_time))
+        logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))
+        start_time = time.time()
+        train_blue_ball_model(name, x_data=train_data["blue"]["x_data"], y_data=train_data["blue"]["y_data"])
+        logger.info("训练耗时: {}".format(time.time() - start_time))
 
     # 保存预测关键结点名
     with open("{}/{}/{}".format(model_path, name, pred_key_name), "w") as f:

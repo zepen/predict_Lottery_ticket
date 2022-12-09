@@ -64,16 +64,16 @@ def spider(name, start, end, mode):
                 item[u"蓝球_{}".format(j+1)] = tr.find_all("td")[6+j].get_text().strip()
             data.append(item)
         elif name == "pls":
-            if tr.find_all("td")[0].get_text().strip() == "注数":
+            if tr.find_all("td")[0].get_text().strip() == "注数" or tr.find_all("td")[1].get_text().strip() == "中奖号码":
                 continue
             item[u"期数"] = tr.find_all("td")[0].get_text().strip()
-            if tr.find_all("td")[1].get_text().strip() == "中奖号码":
-                for i in range(3):
-                    item[u"红球_{}".format(i+1)] = "红球号码{}".format(i+1)
-            else:
-                numlist = tr.find_all("td")[1].get_text().strip().split(" ")
-                for i in range(3):
-                    item[u"红球_{}".format(i+1)] = numlist[i]
+            # if tr.find_all("td")[1].get_text().strip() == "中奖号码":
+            #     for i in range(3):
+            #         item[u"红球_{}".format(i+1)] = "红球号码{}".format(i+1)
+            # else:
+            numlist = tr.find_all("td")[1].get_text().strip().split(" ")
+            for i in range(3):
+                item[u"红球_{}".format(i+1)] = numlist[i]
             data.append(item)
         else:
             logger.warning("抱歉，没有找到数据源！")
