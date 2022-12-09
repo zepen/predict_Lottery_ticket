@@ -11,6 +11,10 @@ from tensorflow_addons.text.crf import crf_decode, crf_log_likelihood
 tf.compat.v1.disable_eager_execution()
 tf.compat.v1.experimental.output_all_intermediates(True)
 
+gpus = tf.config.list_physical_devices("GPU")
+if gpus:
+    tf.config.experimental.set_memory_growth(gpus[0],True)
+
 
 class LstmWithCRFModel(object):
     """ lstm + crf解码模型

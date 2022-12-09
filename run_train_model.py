@@ -16,14 +16,20 @@ from loguru import logger
 
 warnings.filterwarnings('ignore')
 
+gpus = tf.config.list_physical_devices("GPU")
+if gpus:
+    tf.config.experimental.set_memory_growth(gpus[0],True)
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
+parser.add_argument('--batch_size', default=1, type=int, help="集合数量")
 args = parser.parse_args()
 
 pred_key = {}
+ori_data = None
 
 def create_train_data(name, windows):
     """ 创建训练数据
@@ -31,7 +37,10 @@ def create_train_data(name, windows):
     :param windows: 训练窗口
     :return:
     """
-    data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))
+    global ori_data
+    if ori_data is None:
+        ori_data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))
+    data = ori_data.copy()
     if not len(data):
         raise logger.error(" 请执行 get_data.py 进行数据下载！")
     else:
@@ -106,16 +115,16 @@ def train_red_ball_model(name, x_data, y_data):
             logger.info("已加载红球模型！")
         for epoch in range(m_args["model_args"]["red_epochs"]):
             epoch_start_time = time.time()
-            for i in range(data_len):
+            for i in range(int(data_len/m_args["model_args"]["batch_size"])):
                 _, loss_, pred = sess.run([
                     train_step, red_ball_model.loss, red_ball_model.pred_sequence
                 ], feed_dict={
-                    "inputs:0": x_data[i:(i+1), :, :],
-                    "tag_indices:0": y_data[i:(i+1), :],
-                    "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*1) \
-                        if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*1)
+                    "inputs:0": x_data[i:(i+m_args["model_args"]["batch_size"]), :, :],
+                    "tag_indices:0": y_data[i:(i+m_args["model_args"]["batch_size"]), :],
+                    "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*m_args["model_args"]["batch_size"]) \
+                        if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*m_args["model_args"]["batch_size"])
                 })
-                if i % 100 == 0:
+                if i % 10 == 0:
                     if name not in ["pls"]:
                         hotfixed = 1
                     else:
@@ -190,15 +199,15 @@ def train_blue_ball_model(name, x_data, y_data):
             logger.info("已加载蓝球模型！")
         for epoch in range(m_args["model_args"]["blue_epochs"]):
             epoch_start_time = time.time()
-            for i in range(data_len):
+            for i in range(int(data_len/m_args["model_args"]["batch_size"])):
                 if name == "ssq":
                     _, loss_, pred = sess.run([
                         train_step, blue_ball_model.loss, blue_ball_model.pred_label
                     ], feed_dict={
-                        "inputs:0": x_data[i:(i+1), :],
-                        "tag_indices:0": y_data[i:(i+1), :],
+                        "inputs:0": x_data[i:(i+m_args["model_args"]["batch_size"]), :],
+                        "tag_indices:0": y_data[i:(i+m_args["model_args"]["batch_size"]), :],
                     })
-                    if i % 100 == 0:
+                    if i % 10 == 0:
                         logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
                         )
@@ -206,9 +215,9 @@ def train_blue_ball_model(name, x_data, y_data):
                     _, loss_, pred = sess.run([
                         train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
                     ], feed_dict={
-                        "inputs:0": x_data[i:(i + 1), :, :],
-                        "tag_indices:0": y_data[i:(i + 1), :],
-                        "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * 1)
+                        "inputs:0": x_data[i:(i + m_args["model_args"]["batch_size"]), :, :],
+                        "tag_indices:0": y_data[i:(i + m_args["model_args"]["batch_size"]), :],
+                        "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * m_args["model_args"]["batch_size"])
                     })
                     if i % 100 == 0:
                         logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
@@ -270,4 +279,5 @@ if __name__ == '__main__':
     else:
         model_args[args.name]["model_args"]["red_epochs"] = int(args.red_epochs)
         model_args[args.name]["model_args"]["blue_epochs"] = int(args.blue_epochs)
+        model_args[args.name]["model_args"]["batch_size"] = int(args.batch_size)
         run(args.name, list_windows_size)
