@@ -12,6 +12,7 @@
 * step2，创建一个conda环境，conda create -n your_env_name python=3.6；
        
 * step3，进入创建conda的环境 conda activate your_env_name，然后根据自己机器的状况，选择CPU或者GPU模式，并在requirement文件中，把对应版本的Tensorflow解除注释，并执行pip install -r requirements.txt；如果不确定哪个版本更合适，建议使用cpu版本
+* 备注：根据我个人的测试，不推荐使用其他版本的tensorflow,如果因为硬件原因，一定要用更高或者更低版本的tensorflow,请同时更新tensorflow-addons，pandas，numpy的版本。
        
 * step4，按照Getting Started执行即可
 
