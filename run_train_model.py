@@ -21,12 +21,14 @@ gpus = tf.config.list_physical_devices("GPU")
 if gpus:
     tf.config.experimental.set_memory_growth(gpus[0],True)
 
+gpus = False
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
-parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
+parser.add_argument('--red_epochs', default=0, type=int, help="红球训练轮数")
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
-parser.add_argument('--batch_size', default=1, type=int, help="集合数量")
+parser.add_argument('--batch_size', default=128, type=int, help="集合数量")
 args = parser.parse_args()
 
 pred_key = {}
@@ -175,12 +177,20 @@ def train_red_ball_model(name, x_data, y_data):
         else:
             for epoch in range(m_args["model_args"]["red_epochs"]):
                 epoch_start_time = time.time()
-                for i in range(int(data_len/m_args["model_args"]["batch_size"])):
+                for i in range(math.ceil(data_len / m_args["model_args"]["batch_size"])):
+                    x = x_data.copy()
+                    y = y_data.copy()
+                    diff = m_args["model_args"]["batch_size"] - len(x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :])
+                    while diff > 0:
+                        random_index = np.random.randint(0, data_len)
+                        x = np.append(x, [x_data[random_index]], axis=0)
+                        y = np.append(y, [y_data[random_index]], axis=0)
+                        diff -= 1
                     _, loss_, pred = sess.run([
                         train_step, red_ball_model.loss, red_ball_model.pred_sequence
                     ], feed_dict={
-                        "inputs:0": x_data[i:(i+m_args["model_args"]["batch_size"]), :, :],
-                        "tag_indices:0": y_data[i:(i+m_args["model_args"]["batch_size"]), :],
+                        "inputs:0": x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :],
+                        "tag_indices:0": y[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :],
                         "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*m_args["model_args"]["batch_size"]) \
                             if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*m_args["model_args"]["batch_size"])
                     })
@@ -326,24 +336,40 @@ def train_blue_ball_model(name, x_data, y_data):
         else:
             for epoch in range(m_args["model_args"]["blue_epochs"]):
                 epoch_start_time = time.time()
-                for i in range(int(data_len/m_args["model_args"]["batch_size"])):
+                for i in range(math.ceil(data_len / m_args["model_args"]["batch_size"])):
                     if name == "ssq":
+                        x = x_data.copy()
+                        y = y_data.copy()
+                        diff = m_args["model_args"]["batch_size"] - len(x[i * m_args["model_args"]["batch_size"]:((i+1)*m_args["model_args"]["batch_size"]), :])
+                        while diff > 0:
+                            random_index = np.random.randint(0, data_len)
+                            x = np.append(x, [x_data[random_index]], axis=0)
+                            y = np.append(y, [y_data[random_index]], axis=0)
+                            diff -= 1
                         _, loss_, pred = sess.run([
                             train_step, blue_ball_model.loss, blue_ball_model.pred_label
                         ], feed_dict={
-                            "inputs:0": x_data[i:(i+m_args["model_args"]["batch_size"]), :],
-                            "tag_indices:0": y_data[i:(i+m_args["model_args"]["batch_size"]), :],
+                            "inputs:0": x[i * m_args["model_args"]["batch_size"]:((i+1)*m_args["model_args"]["batch_size"]), :],
+                            "tag_indices:0": y[i * m_args["model_args"]["batch_size"]:((i+1)*m_args["model_args"]["batch_size"]), :],
                         })
                         if i % 10 == 0:
                             logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                                 str(m_args["model_args"]["windows_size"]), epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
                             )
                     else:
+                        x = x_data.copy()
+                        y = y_data.copy()
+                        diff = m_args["model_args"]["batch_size"] - len(x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :])
+                        while diff > 0:
+                            random_index = np.random.randint(0, data_len)
+                            x = np.append(x, [x_data[random_index]], axis=0)
+                            y = np.append(y, [y_data[random_index]], axis=0)
+                            diff -= 1
                         _, loss_, pred = sess.run([
                             train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
                         ], feed_dict={
-                            "inputs:0": x_data[i:(i + m_args["model_args"]["batch_size"]), :, :],
-                            "tag_indices:0": y_data[i:(i + m_args["model_args"]["batch_size"]), :],
+                            "inputs:0": x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :],
+                            "tag_indices:0": y[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :],
                             "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * m_args["model_args"]["batch_size"])
                         })
                         if i % 10 == 0:
