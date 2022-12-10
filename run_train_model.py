@@ -21,8 +21,6 @@ gpus = tf.config.list_physical_devices("GPU")
 if gpus:
     tf.config.experimental.set_memory_growth(gpus[0],True)
 
-gpus = False
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
