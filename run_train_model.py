@@ -369,12 +369,13 @@ def action(name):
     logger.info("正在创建【{}】数据集...".format(name_path[name]["name"]))
     train_data = create_train_data(args.name, model_args[name]["model_args"]["windows_size"])
 
-    logger.info("开始训练【{}】红球模型...".format(name_path[name]["name"]))
-    start_time = time.time()
-    train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
-    logger.info("训练耗时: {}".format(time.time() - start_time))
+    if model_args[name]["model_args"]["red_epochs"] > 0:
+        logger.info("开始训练【{}】红球模型...".format(name_path[name]["name"]))
+        start_time = time.time()
+        train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
+        logger.info("训练耗时: {}".format(time.time() - start_time))
 
-    if name not in ["pls"]:
+    if name not in ["pls"] and model_args[name]["model_args"]["blue_epochs"] > 0:
         tf.compat.v1.reset_default_graph()  # 重置网络图
 
         logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))
