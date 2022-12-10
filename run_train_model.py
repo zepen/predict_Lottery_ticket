@@ -26,9 +26,9 @@ gpus = False
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
-parser.add_argument('--red_epochs', default=0, type=int, help="红球训练轮数")
+parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
-parser.add_argument('--batch_size', default=128, type=int, help="集合数量")
+parser.add_argument('--batch_size', default=1, type=int, help="集合数量")
 args = parser.parse_args()
 
 pred_key = {}
