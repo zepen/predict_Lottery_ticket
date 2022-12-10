@@ -115,104 +115,63 @@ def train_red_ball_model(name, x_data, y_data):
             saver = tf.compat.v1.train.Saver()
             saver.restore(sess, "{}red_ball_model.ckpt".format(syspath))
             logger.info("已加载红球模型！")
-        if gpus:
-            dataset = tf.compat.v1.data.Dataset.from_tensor_slices((x_data, y_data))
-            dataset = dataset.shuffle(buffer_size=data_len)
-            dataset = dataset.batch(m_args["model_args"]["batch_size"])
-            dataset = dataset.repeat(m_args["model_args"]["red_epochs"])
-            iterator = dataset.make_one_shot_iterator()
-            nextelement = iterator.get_next()
-            index = 0
-            epoch = 0
-            epochindex = math.ceil(data_len / m_args["model_args"]["batch_size"])
-            totalindex = epochindex * m_args["model_args"]["red_epochs"]
-            epoch_start_time = time.time()
-            while True:
-                try:
-                    x, y = sess.run(nextelement)
-                    batch_size = len(x)
-                    diff = m_args["model_args"]["batch_size"] - batch_size
-                    while diff > 0:
-                        random_index = np.random.randint(0, data_len)
-                        x = np.append(x, [x_data[random_index]], axis=0)
-                        y = np.append(y, [y_data[random_index]], axis=0)
-                        diff -= 1
-                    index += 1
-                    _, loss_, pred = sess.run([
-                        train_step, red_ball_model.loss, red_ball_model.pred_sequence
-                    ], feed_dict={
-                        "inputs:0": x,
-                        "tag_indices:0": y,
-                        "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*m_args["model_args"]["batch_size"]) \
-                            if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*m_args["model_args"]["batch_size"])
-                    })
-                    if index % 10 == 0:
-                        if name not in ["pls"]:
-                            hotfixed = 1
-                        else:
-                            hotfixed = 0
-                        logger.info("w_size: {}, index: {}, loss: {}, tag: {}, pred: {}".format(
-                            str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, y[0] + hotfixed, pred[0] + hotfixed)
-                        )
-                    if index % epochindex == 0:
-                        epoch += 1
-                        logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
-                        epoch_start_time = time.time()
-                    if epoch % save_epoch == 0 and epoch > 0:
-                        pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
-                        if not os.path.exists(syspath):
-                            os.makedirs(syspath)
-                        saver = tf.compat.v1.train.Saver()
-                        saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
-                except tf.errors.OutOfRangeError:
-                    logger.info("训练完成！")
-                    pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
-                    if not os.path.exists(syspath):
-                        os.makedirs(syspath)
-                    saver = tf.compat.v1.train.Saver()
-                    saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
-                    break
-        else:
-            for epoch in range(m_args["model_args"]["red_epochs"]):
-                epoch_start_time = time.time()
-                for i in range(math.ceil(data_len / m_args["model_args"]["batch_size"])):
-                    x = x_data.copy()
-                    y = y_data.copy()
-                    diff = m_args["model_args"]["batch_size"] - len(x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :])
-                    while diff > 0:
-                        random_index = np.random.randint(0, data_len)
-                        x = np.append(x, [x_data[random_index]], axis=0)
-                        y = np.append(y, [y_data[random_index]], axis=0)
-                        diff -= 1
-                    _, loss_, pred = sess.run([
-                        train_step, red_ball_model.loss, red_ball_model.pred_sequence
-                    ], feed_dict={
-                        "inputs:0": x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :],
-                        "tag_indices:0": y[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :],
-                        "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*m_args["model_args"]["batch_size"]) \
-                            if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*m_args["model_args"]["batch_size"])
-                    })
-                    if i % 10 == 0:
-                        if name not in ["pls"]:
-                            hotfixed = 1
-                        else:
-                            hotfixed = 0
-                        logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                            str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i+1), :][0] + hotfixed, pred[0] + hotfixed)
-                        )
-                logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
+
+        dataset = tf.compat.v1.data.Dataset.from_tensor_slices((x_data, y_data))
+        dataset = dataset.shuffle(buffer_size=data_len)
+        dataset = dataset.batch(m_args["model_args"]["batch_size"])
+        dataset = dataset.repeat(m_args["model_args"]["red_epochs"])
+        iterator = dataset.make_one_shot_iterator()
+        nextelement = iterator.get_next()
+        index = 0
+        epoch = 0
+        epochindex = math.ceil(data_len / m_args["model_args"]["batch_size"])
+        totalindex = epochindex * m_args["model_args"]["red_epochs"]
+        epoch_start_time = time.time()
+        while True:
+            try:
+                x, y = sess.run(nextelement)
+                batch_size = len(x)
+                diff = m_args["model_args"]["batch_size"] - batch_size
+                while diff > 0:
+                    random_index = np.random.randint(0, data_len)
+                    x = np.append(x, [x_data[random_index]], axis=0)
+                    y = np.append(y, [y_data[random_index]], axis=0)
+                    diff -= 1
+                index += 1
+                _, loss_, pred = sess.run([
+                    train_step, red_ball_model.loss, red_ball_model.pred_sequence
+                ], feed_dict={
+                    "inputs:0": x,
+                    "tag_indices:0": y,
+                    "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*m_args["model_args"]["batch_size"]) \
+                        if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*m_args["model_args"]["batch_size"])
+                })
+                if index % 10 == 0:
+                    if name not in ["pls"]:
+                        hotfixed = 1
+                    else:
+                        hotfixed = 0
+                    logger.info("w_size: {}, index: {}, loss: {}, tag: {}, pred: {}".format(
+                        str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, y[0] + hotfixed, pred[0] + hotfixed)
+                    )
+                if index % epochindex == 0:
+                    epoch += 1
+                    logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
+                    epoch_start_time = time.time()
                 if epoch % save_epoch == 0 and epoch > 0:
                     pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
                         os.makedirs(syspath)
                     saver = tf.compat.v1.train.Saver()
                     saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
-            pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
-            if not os.path.exists(syspath):
-                os.makedirs(syspath)
-            saver = tf.compat.v1.train.Saver()
-            saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
-
+            except tf.errors.OutOfRangeError:
+                logger.info("训练完成！")
+                pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
+                if not os.path.exists(syspath):
+                    os.makedirs(syspath)
+                saver = tf.compat.v1.train.Saver()
+                saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
+                break
 
 def train_blue_ball_model(name, x_data, y_data):
     """ 蓝球模型训练
@@ -267,125 +226,69 @@ def train_blue_ball_model(name, x_data, y_data):
             saver.restore(sess, "{}blue_ball_model.ckpt".format(syspath))
             logger.info("已加载蓝球模型！")
         
-        if gpus:
-            dataset = tf.compat.v1.data.Dataset.from_tensor_slices((x_data, y_data))
-            dataset = dataset.shuffle(buffer_size=data_len)
-            dataset = dataset.batch(m_args["model_args"]["batch_size"])
-            dataset = dataset.repeat(m_args["model_args"]["red_epochs"])
-            iterator = dataset.make_one_shot_iterator()
-            nextelement = iterator.get_next()
-            index = 0
-            epoch = 0
-            epochindex = math.ceil(data_len / m_args["model_args"]["batch_size"])
-            totalindex = epochindex * m_args["model_args"]["red_epochs"]
-            epoch_start_time = time.time()
-            while True:
-                try:
-                    x, y = sess.run(nextelement)
-                    batch_size = len(x)
-                    diff = m_args["model_args"]["batch_size"] - batch_size
-                    while diff > 0:
-                        random_index = np.random.randint(0, data_len)
-                        x = np.append(x, [x_data[random_index]], axis=0)
-                        y = np.append(y, [y_data[random_index]], axis=0)
-                        diff -= 1
-                    index += 1
-                    if name == "ssq":
-                        _, loss_, pred = sess.run([
-                            train_step, blue_ball_model.loss, blue_ball_model.pred_label
-                        ], feed_dict={
-                            "inputs:0": x,
-                            "tag_indices:0": y,
-                        })
-                        if index % 10 == 0:
-                            logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                                str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, np.argmax(y[0]) + 1, pred[0] + 1)
-                            )
-                    else:
-                        _, loss_, pred = sess.run([
-                            train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
-                        ], feed_dict={
-                            "inputs:0": x,
-                            "tag_indices:0": y,
-                            "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * m_args["model_args"]["batch_size"])
-                        })
-                        if index % 10 == 0:
-                            logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                                str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_,y[0] + 1, pred[0] + 1)
-                            )
-                    if index % epochindex == 0:
-                        epoch += 1
-                        logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
-                        epoch_start_time = time.time()
-                    if epoch % save_epoch == 0 and epoch > 0:
-                        pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
-                        if not os.path.exists(syspath):
-                            os.mkdir(syspath)
-                        saver = tf.compat.v1.train.Saver()
-                        saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
-                except tf.errors.OutOfRangeError:
-                    logger.info("训练完成！")
+        dataset = tf.compat.v1.data.Dataset.from_tensor_slices((x_data, y_data))
+        dataset = dataset.shuffle(buffer_size=data_len)
+        dataset = dataset.batch(m_args["model_args"]["batch_size"])
+        dataset = dataset.repeat(m_args["model_args"]["red_epochs"])
+        iterator = dataset.make_one_shot_iterator()
+        nextelement = iterator.get_next()
+        index = 0
+        epoch = 0
+        epochindex = math.ceil(data_len / m_args["model_args"]["batch_size"])
+        totalindex = epochindex * m_args["model_args"]["red_epochs"]
+        epoch_start_time = time.time()
+        while True:
+            try:
+                x, y = sess.run(nextelement)
+                batch_size = len(x)
+                diff = m_args["model_args"]["batch_size"] - batch_size
+                while diff > 0:
+                    random_index = np.random.randint(0, data_len)
+                    x = np.append(x, [x_data[random_index]], axis=0)
+                    y = np.append(y, [y_data[random_index]], axis=0)
+                    diff -= 1
+                index += 1
+                if name == "ssq":
+                    _, loss_, pred = sess.run([
+                        train_step, blue_ball_model.loss, blue_ball_model.pred_label
+                    ], feed_dict={
+                        "inputs:0": x,
+                        "tag_indices:0": y,
+                    })
+                    if index % 10 == 0:
+                        logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                            str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, np.argmax(y[0]) + 1, pred[0] + 1)
+                        )
+                else:
+                    _, loss_, pred = sess.run([
+                        train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
+                    ], feed_dict={
+                        "inputs:0": x,
+                        "tag_indices:0": y,
+                        "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * m_args["model_args"]["batch_size"])
+                    })
+                    if index % 10 == 0:
+                        logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                            str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_,y[0] + 1, pred[0] + 1)
+                        )
+                if index % epochindex == 0:
+                    epoch += 1
+                    logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
+                    epoch_start_time = time.time()
+                if epoch % save_epoch == 0 and epoch > 0:
                     pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
                         os.mkdir(syspath)
                     saver = tf.compat.v1.train.Saver()
                     saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
-                    break
-        else:
-            for epoch in range(m_args["model_args"]["blue_epochs"]):
-                epoch_start_time = time.time()
-                for i in range(math.ceil(data_len / m_args["model_args"]["batch_size"])):
-                    if name == "ssq":
-                        x = x_data.copy()
-                        y = y_data.copy()
-                        diff = m_args["model_args"]["batch_size"] - len(x[i * m_args["model_args"]["batch_size"]:((i+1)*m_args["model_args"]["batch_size"]), :])
-                        while diff > 0:
-                            random_index = np.random.randint(0, data_len)
-                            x = np.append(x, [x_data[random_index]], axis=0)
-                            y = np.append(y, [y_data[random_index]], axis=0)
-                            diff -= 1
-                        _, loss_, pred = sess.run([
-                            train_step, blue_ball_model.loss, blue_ball_model.pred_label
-                        ], feed_dict={
-                            "inputs:0": x[i * m_args["model_args"]["batch_size"]:((i+1)*m_args["model_args"]["batch_size"]), :],
-                            "tag_indices:0": y[i * m_args["model_args"]["batch_size"]:((i+1)*m_args["model_args"]["batch_size"]), :],
-                        })
-                        if i % 10 == 0:
-                            logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                                str(m_args["model_args"]["windows_size"]), epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
-                            )
-                    else:
-                        x = x_data.copy()
-                        y = y_data.copy()
-                        diff = m_args["model_args"]["batch_size"] - len(x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :])
-                        while diff > 0:
-                            random_index = np.random.randint(0, data_len)
-                            x = np.append(x, [x_data[random_index]], axis=0)
-                            y = np.append(y, [y_data[random_index]], axis=0)
-                            diff -= 1
-                        _, loss_, pred = sess.run([
-                            train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
-                        ], feed_dict={
-                            "inputs:0": x[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :, :],
-                            "tag_indices:0": y[i * m_args["model_args"]["batch_size"]:((i + 1) * m_args["model_args"]["batch_size"]), :],
-                            "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * m_args["model_args"]["batch_size"])
-                        })
-                        if i % 10 == 0:
-                            logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                                str(m_args["model_args"]["windows_size"]), epoch, loss_, y_data[i:(i + 1), :][0] + 1, pred[0] + 1)
-                            )
-                logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1)))
+            except tf.errors.OutOfRangeError:
+                logger.info("训练完成！")
                 pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
-                if epoch % save_epoch == 0 and epoch > 0:
-                    if not os.path.exists(syspath):
-                        os.mkdir(syspath)
-                    saver = tf.compat.v1.train.Saver()
-                    saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
-            pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
-            if not os.path.exists(syspath):
-                os.mkdir(syspath)
-            saver = tf.compat.v1.train.Saver()
-            saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
+                if not os.path.exists(syspath):
+                    os.mkdir(syspath)
+                saver = tf.compat.v1.train.Saver()
+                saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
+                break
 
 def action(name):
     tf.compat.v1.reset_default_graph()
