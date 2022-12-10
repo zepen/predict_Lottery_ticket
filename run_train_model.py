@@ -229,13 +229,13 @@ def train_blue_ball_model(name, x_data, y_data):
         dataset = tf.compat.v1.data.Dataset.from_tensor_slices((x_data, y_data))
         dataset = dataset.shuffle(buffer_size=data_len)
         dataset = dataset.batch(m_args["model_args"]["batch_size"])
-        dataset = dataset.repeat(m_args["model_args"]["red_epochs"])
+        dataset = dataset.repeat(m_args["model_args"]["blue_epochs"])
         iterator = dataset.make_one_shot_iterator()
         nextelement = iterator.get_next()
         index = 0
         epoch = 0
         epochindex = math.ceil(data_len / m_args["model_args"]["batch_size"])
-        totalindex = epochindex * m_args["model_args"]["red_epochs"]
+        totalindex = epochindex * m_args["model_args"]["blue_epochs"]
         epoch_start_time = time.time()
         while True:
             try:
@@ -273,7 +273,7 @@ def train_blue_ball_model(name, x_data, y_data):
                         )
                 if index % epochindex == 0:
                     epoch += 1
-                    logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
+                    logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1)))
                     epoch_start_time = time.time()
                 if epoch % save_epoch == 0 and epoch > 0:
                     pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
