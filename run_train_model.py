@@ -128,6 +128,8 @@ def train_red_ball_model(name, x_data, y_data):
         epochindex = math.ceil(data_len / m_args["model_args"]["batch_size"])
         totalindex = epochindex * m_args["model_args"]["red_epochs"]
         epoch_start_time = time.time()
+        perindex = 0
+        totalloss = 0.0
         while True:
             try:
                 x, y = sess.run(nextelement)
@@ -147,6 +149,8 @@ def train_red_ball_model(name, x_data, y_data):
                     "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*m_args["model_args"]["batch_size"]) \
                         if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*m_args["model_args"]["batch_size"])
                 })
+                perindex += 1
+                totalloss += loss_
                 if index % 10 == 0:
                     if name not in ["pls"]:
                         hotfixed = 1
@@ -164,8 +168,9 @@ def train_red_ball_model(name, x_data, y_data):
                         break
                 if index % epochindex == 0:
                     epoch += 1
-                    logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
+                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)), totalloss / perindex)
                     epoch_start_time = time.time()
+                    perindex = 0
                 if epoch % save_epoch == 0 and epoch > 0:
                     pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
@@ -245,6 +250,8 @@ def train_blue_ball_model(name, x_data, y_data):
         epochindex = math.ceil(data_len / m_args["model_args"]["batch_size"])
         totalindex = epochindex * m_args["model_args"]["blue_epochs"]
         epoch_start_time = time.time()
+        perindex = 0
+        totalloss = 0.0
         while True:
             try:
                 x, y = sess.run(nextelement)
@@ -263,6 +270,8 @@ def train_blue_ball_model(name, x_data, y_data):
                         "inputs:0": x,
                         "tag_indices:0": y,
                     })
+                    perindex += 1
+                    totalloss += loss_
                     if index % 10 == 0:
                         logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, np.argmax(y[0]) + 1, pred[0] + 1)
@@ -282,6 +291,8 @@ def train_blue_ball_model(name, x_data, y_data):
                         "tag_indices:0": y,
                         "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * m_args["model_args"]["batch_size"])
                     })
+                    perindex += 1
+                    totalloss += loss_
                     if index % 10 == 0:
                         logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_,y[0] + 1, pred[0] + 1)
@@ -295,8 +306,9 @@ def train_blue_ball_model(name, x_data, y_data):
                             break
                 if index % epochindex == 0:
                     epoch += 1
-                    logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1)))
+                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1)), totalloss / perindex)
                     epoch_start_time = time.time()
+                    perindex = 0
                 if epoch % save_epoch == 0 and epoch > 0:
                     pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
