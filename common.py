@@ -14,7 +14,7 @@ def get_url(name):
     :return:
     """
     url = "https://datachart.500.com/{}/history/".format(name)
-    path = "newinc/history.php?start={}&end={}"
+    path = "newinc/history.php?start={}&end={}&limit={}"
     if name == "qxc" or name == "pls":
         path = "inc/history.php?start={}&end={}&limit={}"
     return url, path

@@ -15,8 +15,8 @@ from loguru import logger
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="pls", type=str, help="选择训练数据")
-parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
+parser.add_argument('--windows_size', default='1', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 args = parser.parse_args()
 
 # 关闭eager模式

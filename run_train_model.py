@@ -27,6 +27,7 @@ parser.add_argument('--windows_size', default='3', type=str, help="训练窗口�
 parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
 parser.add_argument('--batch_size', default=1, type=int, help="集合数量")
+parser.add_argument('--predict_pro', default=0, type=int, help="更新batch_size")
 args = parser.parse_args()
 
 pred_key = {}
@@ -154,6 +155,13 @@ def train_red_ball_model(name, x_data, y_data):
                     logger.info("w_size: {}, index: {}, loss: {}, tag: {}, pred: {}".format(
                         str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, y[0] + hotfixed, pred[0] + hotfixed)
                     )
+                    if args.predict_pro == 1:
+                        pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
+                        if not os.path.exists(syspath):
+                            os.makedirs(syspath)
+                        saver = tf.compat.v1.train.Saver()
+                        saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
+                        break
                 if index % epochindex == 0:
                     epoch += 1
                     logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)))
@@ -259,6 +267,13 @@ def train_blue_ball_model(name, x_data, y_data):
                         logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, np.argmax(y[0]) + 1, pred[0] + 1)
                         )
+                        if args.predict_pro == 1:
+                            pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
+                            if not os.path.exists(syspath):
+                                os.mkdir(syspath)
+                            saver = tf.compat.v1.train.Saver()
+                            saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
+                            break
                 else:
                     _, loss_, pred = sess.run([
                         train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
@@ -271,6 +286,13 @@ def train_blue_ball_model(name, x_data, y_data):
                         logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_,y[0] + 1, pred[0] + 1)
                         )
+                        if args.predict_pro == 1:
+                            pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
+                            if not os.path.exists(syspath):
+                                os.mkdir(syspath)
+                            saver = tf.compat.v1.train.Saver()
+                            saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
+                            break
                 if index % epochindex == 0:
                     epoch += 1
                     logger.info("epoch: {}, cost time: {}, ETA: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1)))
@@ -281,6 +303,7 @@ def train_blue_ball_model(name, x_data, y_data):
                         os.mkdir(syspath)
                     saver = tf.compat.v1.train.Saver()
                     saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
+                    
             except tf.errors.OutOfRangeError:
                 logger.info("训练完成！")
                 pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
@@ -336,4 +359,9 @@ if __name__ == '__main__':
         model_args[args.name]["model_args"]["red_epochs"] = int(args.red_epochs)
         model_args[args.name]["model_args"]["blue_epochs"] = int(args.blue_epochs)
         model_args[args.name]["model_args"]["batch_size"] = int(args.batch_size)
+        if args.predict_pro == 1:
+            list_windows_size = [3,5,10,30,50,100,300,500]
+            model_args[args.name]["model_args"]["red_epochs"] = 1
+            model_args[args.name]["model_args"]["blue_epochs"] = 1
+            model_args[args.name]["model_args"]["batch_size"] = 1
         run(args.name, list_windows_size)
