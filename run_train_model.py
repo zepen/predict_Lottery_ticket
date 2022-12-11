@@ -168,9 +168,10 @@ def train_red_ball_model(name, x_data, y_data):
                         break
                 if index % epochindex == 0:
                     epoch += 1
-                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1)), totalloss / perindex)
+                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1), totalloss / perindex / m_args["model_args"]["batch_size"]))
                     epoch_start_time = time.time()
                     perindex = 0
+                    totalloss = 0.0
                 if epoch % save_epoch == 0 and epoch > 0:
                     pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
@@ -306,9 +307,10 @@ def train_blue_ball_model(name, x_data, y_data):
                             break
                 if index % epochindex == 0:
                     epoch += 1
-                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1)), totalloss / perindex)
+                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1), totalloss / perindex / m_args["model_args"]["batch_size"]))
                     epoch_start_time = time.time()
                     perindex = 0
+                    totalloss = 0.0
                 if epoch % save_epoch == 0 and epoch > 0:
                     pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
