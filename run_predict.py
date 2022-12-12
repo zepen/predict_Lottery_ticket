@@ -89,7 +89,7 @@ def run_predict(window_size):
         current_number = get_current_number(args.name)
         logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
 
-    elif args.name == "pls":
+    elif args.name in ["pls", "kl8"]:
         red_graph = tf.compat.v1.Graph()
         with red_graph.as_default():
             red_saver = tf.compat.v1.train.import_meta_graph(
@@ -133,9 +133,9 @@ def get_red_ball_predict_result(predict_features, sequence_len, windows_size):
     """ 获取红球预测结果
     """
     name_list = [(ball_name[0], i + 1) for i in range(sequence_len)]
-    if args.name in ["ssq", "dlt"]:
+    if args.name not in ["pls"]:
         hotfixed = 1
-    elif args.name == "pls":
+    else:
         hotfixed = 0
     data = predict_features[["{}_{}".format(name[0], i) for name, i in name_list]].values.astype(int) - hotfixed
     with red_graph.as_default():
@@ -196,6 +196,13 @@ def get_final_result(name, predict_features, mode=0):
         pred_result_list = red_pred[0].tolist()
         return {
             b_name: int(res) for b_name, res in zip(ball_name_list, pred_result_list)
+        }
+    elif name == "kl8":
+        red_pred, red_name_list = get_red_ball_predict_result(predict_features, m_args["red_sequence_len"], m_args["windows_size"])
+        ball_name_list = ["{}_{}".format(name[mode], i) for name, i in red_name_list]
+        pred_result_list = red_pred[0].tolist()
+        return {
+            b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)
         }
 
 def run(name):

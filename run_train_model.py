@@ -67,6 +67,8 @@ def create_train_data(name, windows):
         cut_num = 5
     elif name == "pls":
         cut_num = 3
+    elif name == "kl8":
+        cut_num = 20
     return {
         "red": {
             "x_data": np.array(x_data)[:, :, :cut_num], "y_data": np.array(y_data)[:, :cut_num]
@@ -339,7 +341,7 @@ def action(name):
         train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
         logger.info("训练耗时: {}".format(time.time() - start_time))
 
-    if name not in ["pls"] and model_args[name]["model_args"]["blue_epochs"] > 0:
+    if name not in ["pls", "kl8"] and model_args[name]["model_args"]["blue_epochs"] > 0:
         tf.compat.v1.reset_default_graph()  # 重置网络图
 
         logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))

@@ -29,11 +29,55 @@ name_path = {
         "name": "排列三",
         "path": "data/pls/"
     },
+    "kl8": {
+        "name": "快乐8",
+        "path": "data/kl8/"
+    },
 }
 
 model_path = os.getcwd() + "/model/"
 
 model_args = {
+    "kl8": {
+        "model_args": {
+            "windows_size": 3,
+            "batch_size": 1,
+            "red_sequence_len": 20,
+            "sequence_len": 20,
+            "red_n_class": 80,
+            "red_epochs": 1,
+            "red_embedding_size": 20,
+            "red_hidden_size": 20,
+            "red_layer_size": 1,
+            "blue_sequence_len": 1,
+            "blue_n_class": 0,
+            "blue_epochs": 0,
+            "blue_embedding_size": 0,
+            "blue_hidden_size": 0,
+            "blue_layer_size": 0,
+        },
+        "train_args": {
+            "red_learning_rate": 0.001,
+            "red_beta1": 0.9,
+            "red_beta2": 0.999,
+            "red_epsilon": 1e-08,
+            "blue_learning_rate": 0.001,
+            "blue_beta1": 0.9,
+            "blue_beta2": 0.999,
+            "blue_epsilon": 1e-08
+        },
+        "path": {
+            "red": model_path + "/kl8/red_ball_model/",
+            "blue": model_path + "/kl8/blue_ball_model/"
+        },
+        "pathname": {
+            "name":"/kl8/"
+        },
+        "subpath": {
+            "red": "/red_ball_model/",
+            "blue": "/blue_ball_model/"
+        }
+    },
     "pls": {
         "model_args": {
             "windows_size": 3,

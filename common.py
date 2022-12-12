@@ -17,6 +17,9 @@ def get_url(name):
     path = "newinc/history.php?start={}&end={}&limit={}"
     if name == "qxc" or name == "pls":
         path = "inc/history.php?start={}&end={}&limit={}"
+    elif name == "kl8":
+        url = "https://datachart.500.com/{}/zoushi/".format(name)
+        path = "newinc/jbzs_redblue.php?from=&to=&shujcount=0&sort=1&expect=-1"
     return url, path
 
 def get_current_number(name):
@@ -28,9 +31,14 @@ def get_current_number(name):
         r = requests.get("{}{}".format(url, "inc/history.php"), verify=False)
     elif name in ["ssq", "dlt"]:
         r = requests.get("{}{}".format(url, "history.shtml"), verify=False)
+    elif name in ["kl8"]:
+        r = requests.get("{}{}".format(url, "newinc/jbzs_redblue.php"), verify=False)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
-    current_num = soup.find("div", class_="wrap_datachart").find("input", id="end")["value"]
+    if name in ["kl8"]:
+        current_num = soup.find("div", class_="wrap_datachart").find("input", id="to")["value"]
+    else:
+        current_num = soup.find("div", class_="wrap_datachart").find("input", id="end")["value"]
     return current_num
 
 
@@ -49,7 +57,7 @@ def spider(name="ssq", start=1, end=999999, mode="train"):
         r = requests.get(url=url, verify=False)
         r.encoding = "gb2312"
         soup = BeautifulSoup(r.text, "lxml")
-        if name in ["ssq", "dlt"]:
+        if name in ["ssq", "dlt", "kl8"]:
             trs = soup.find("tbody", attrs={"id": "tdata"}).find_all("tr")
         elif name in ["qxc", "pls"]:
             trs = soup.find("div", class_="wrap_datachart").find("table", id="tablelist").find_all("tr")
@@ -73,14 +81,21 @@ def spider(name="ssq", start=1, end=999999, mode="train"):
                 if tr.find_all("td")[0].get_text().strip() == "注数" or tr.find_all("td")[1].get_text().strip() == "中奖号码":
                     continue
                 item[u"期数"] = tr.find_all("td")[0].get_text().strip()
-                # if tr.find_all("td")[1].get_text().strip() == "中奖号码":
-                #     for i in range(3):
-                #         item[u"红球_{}".format(i+1)] = "红球号码{}".format(i+1)
-                # else:
                 numlist = tr.find_all("td")[1].get_text().strip().split(" ")
                 for i in range(3):
                     item[u"红球_{}".format(i+1)] = numlist[i]
                 data.append(item)
+            elif name == "kl8":
+                tds = tr.find_all("td")
+                index = 1
+                for td in tds:
+                    if td.has_attr('align') and td['align'] == 'center':
+                        item[u"期数"] = td.get_text().strip()
+                    elif td.has_attr('class') and td['class'][0] == 'chartBall01':
+                        item[u"红球_{}".format(index)] = td.get_text().strip()
+                        index += 1
+                if item:
+                    data.append(item)
             else:
                 logger.warning("抱歉，没有找到数据源！")
 
@@ -111,6 +126,11 @@ def spider(name="ssq", start=1, end=999999, mode="train"):
             elif name == "pls":
                 item[u"期数"] = ori_data.iloc[i, 1]
                 for j in range(3):
+                    item[u"红球_{}".format(j+1)] = ori_data.iloc[i, j+2]
+                data.append(item)
+            elif name == "kl8":
+                item[u"期数"] = ori_data.iloc[i, 1]
+                for j in range(20):
                     item[u"红球_{}".format(j+1)] = ori_data.iloc[i, j+2]
                 data.append(item)
             else:
