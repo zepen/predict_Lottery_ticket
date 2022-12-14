@@ -15,7 +15,7 @@ from loguru import logger
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
+parser.add_argument('--name', default="kl8", type=str, help="选择训练数据")
 parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 args = parser.parse_args()
 
@@ -211,7 +211,16 @@ def run(name):
     data = spider(name, str(int(current_number) - diff_number), current_number, "predict")
     logger.info("【{}】预测期号：{} 窗口大小:{}".format(name_path[name]["name"], int(current_number) + 1, windows_size))
     predict_features_ = try_error(name, data, windows_size)
-    logger.info("预测结果：{}".format(get_final_result(name, predict_features_)))
+    # logger.info("预测结果：{}".format(get_final_result(name, predict_features_)))
+    predict_dict = get_final_result(name, predict_features_)
+    ans = ""
+    for item in predict_dict:
+        if (item == "红球_1"):
+            ans += "红球："
+        if (item == "蓝球_1"):
+            ans += "蓝球："
+        ans += str(predict_dict[item]) + " "
+    logger.info("预测结果：{}".format(ans))
 
 
 if __name__ == '__main__':
