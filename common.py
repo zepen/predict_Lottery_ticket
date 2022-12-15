@@ -106,11 +106,11 @@ def spider(name="ssq", start=1, end=999999, mode="train", windows_size=0):
     elif mode == "predict":
         ori_data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))  
         data = []
+        if windows_size > 0:
+            ori_data = ori_data[0:windows_size]
         for i in range(len(ori_data)):
             item = dict()
-            if windows_size > 0:
-                ori_data = ori_data[0:windows_size]
-            elif ori_data.iloc[i, 1] < int(start) or ori_data.iloc[i, 1] > int(end):
+            if (ori_data.iloc[i, 1] < int(start) or ori_data.iloc[i, 1] > int(end)) and windows_size == 0:
                 continue
             if name == "ssq":
                 item[u"期数"] = ori_data.iloc[i, 1]

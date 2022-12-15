@@ -15,8 +15,8 @@ from loguru import logger
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="dlt", type=str, help="选择训练数据")
-parser.add_argument('--windows_size', default='300', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
+parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 args = parser.parse_args()
 
 # 关闭eager模式
@@ -57,7 +57,7 @@ def run_predict(window_size):
         logger.info("已加载蓝球模型！窗口大小:{}".format(model_args[args.name]["model_args"]["windows_size"]))
 
         # 加载关键节点名
-        with open("{}/{}/{}".format(model_path, args.name, pred_key_name)) as f:
+        with open("{}/{}".format(model_path + model_args[args.name]["pathname"]['name'] + str(model_args[args.name]["model_args"]["windows_size"]), pred_key_name)) as f:
             pred_key_d = json.load(f)
 
         current_number = get_current_number(args.name)
@@ -216,9 +216,9 @@ def run(name):
     predict_dict = get_final_result(name, predict_features_)
     ans = ""
     for item in predict_dict:
-        if (item == "红球_1"):
+        if (item == "红球_1" or item == "红球"):
             ans += "红球："
-        if (item == "蓝球_1"):
+        if (item == "蓝球_1" or item == "蓝球"):
             ans += "蓝球："
         ans += str(predict_dict[item]) + " "
     logger.info("预测结果：{}".format(ans))

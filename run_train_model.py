@@ -28,6 +28,7 @@ parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮�
 parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
 parser.add_argument('--batch_size', default=1, type=int, help="集合数量")
 parser.add_argument('--predict_pro', default=0, type=int, help="更新batch_size")
+parser.add_argument('--epochs', default=1, type=int, help="训练轮数(红蓝球交叉训练)")
 args = parser.parse_args()
 
 pred_key = {}
@@ -334,24 +335,25 @@ def action(name):
 
     logger.info("正在创建【{}】数据集...".format(name_path[name]["name"]))
     train_data = create_train_data(args.name, model_args[name]["model_args"]["windows_size"])
+    for i in range(args.epochs):
+        if model_args[name]["model_args"]["red_epochs"] > 0:
+            tf.compat.v1.reset_default_graph()  # 重置网络图
+            logger.info("开始训练【{}】红球模型...".format(name_path[name]["name"]))
+            start_time = time.time()
+            train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
+            logger.info("训练耗时: {}".format(time.time() - start_time))
 
-    if model_args[name]["model_args"]["red_epochs"] > 0:
-        logger.info("开始训练【{}】红球模型...".format(name_path[name]["name"]))
-        start_time = time.time()
-        train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
-        logger.info("训练耗时: {}".format(time.time() - start_time))
+        if name not in ["pls", "kl8"] and model_args[name]["model_args"]["blue_epochs"] > 0:
+            tf.compat.v1.reset_default_graph()  # 重置网络图
 
-    if name not in ["pls", "kl8"] and model_args[name]["model_args"]["blue_epochs"] > 0:
-        tf.compat.v1.reset_default_graph()  # 重置网络图
+            logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))
+            start_time = time.time()
+            train_blue_ball_model(name, x_data=train_data["blue"]["x_data"], y_data=train_data["blue"]["y_data"])
+            logger.info("训练耗时: {}".format(time.time() - start_time))
 
-        logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))
-        start_time = time.time()
-        train_blue_ball_model(name, x_data=train_data["blue"]["x_data"], y_data=train_data["blue"]["y_data"])
-        logger.info("训练耗时: {}".format(time.time() - start_time))
-
-    # 保存预测关键结点名
-    with open("{}/{}/{}".format(model_path, name, pred_key_name), "w") as f:
-        json.dump(pred_key, f)
+        # 保存预测关键结点名
+        with open("{}/{}".format(model_path + model_args[args.name]["pathname"]['name'] + str(model_args[args.name]["model_args"]["windows_size"]), pred_key_name), "w") as f:
+            json.dump(pred_key, f)
 
 def run(name, windows_size):
     """ 执行训练
@@ -380,4 +382,9 @@ if __name__ == '__main__':
             model_args[args.name]["model_args"]["red_epochs"] = 1
             model_args[args.name]["model_args"]["blue_epochs"] = 1
             model_args[args.name]["model_args"]["batch_size"] = 1
+        if args.epochs > 1:
+            model_args[args.name]["model_args"]["red_epochs"] = 1
+            model_args[args.name]["model_args"]["blue_epochs"] = 1
+        elif args.epochs <= 0:
+            raise Exception("训练轮数不能小于1！")
         run(args.name, list_windows_size)
