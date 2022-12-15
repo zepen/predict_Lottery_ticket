@@ -15,8 +15,8 @@ from loguru import logger
 from common import *
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--name', default="kl8", type=str, help="选择训练数据")
-parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--name', default="dlt", type=str, help="选择训练数据")
+parser.add_argument('--windows_size', default='300', type=str, help="训练窗口大小,如有多个，用'，'隔开")
 args = parser.parse_args()
 
 # 关闭eager模式
@@ -121,9 +121,10 @@ def try_error(name, predict_features, windows_size):
         logger.warning("期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")
         last_current_year = (get_year() - 1) * 1000
         max_times = 160
-        while len(predict_features) != 3:
-            predict_features = spider(name, last_current_year + max_times, get_current_number(name), "predict")[[x[0] for x in ball_name]]
-            time.sleep(np.random.random(1).tolist()[0])
+        while len(predict_features) != windows_size:
+            # predict_features = spider(name, last_current_year + max_times, get_current_number(name), "predict")[[x[0] for x in ball_name]]
+            predict_features = spider(name, last_current_year + max_times, get_current_number(name), "predict", windows_size)
+            # time.sleep(np.random.random(1).tolist()[0])
             max_times -= 1
         return predict_features
     return predict_features

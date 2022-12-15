@@ -42,7 +42,7 @@ def get_current_number(name):
     return current_num
 
 
-def spider(name="ssq", start=1, end=999999, mode="train"):
+def spider(name="ssq", start=1, end=999999, mode="train", windows_size=0):
     """ 爬取历史数据
     :param name 玩法
     :param start 开始一期
@@ -104,11 +104,13 @@ def spider(name="ssq", start=1, end=999999, mode="train"):
         return pd.DataFrame(data)
 
     elif mode == "predict":
-        ori_data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))
+        ori_data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))  
         data = []
         for i in range(len(ori_data)):
             item = dict()
-            if ori_data.iloc[i, 1] < int(start) or ori_data.iloc[i, 1] > int(end):
+            if windows_size > 0:
+                ori_data = ori_data[0:windows_size]
+            elif ori_data.iloc[i, 1] < int(start) or ori_data.iloc[i, 1] > int(end):
                 continue
             if name == "ssq":
                 item[u"期数"] = ori_data.iloc[i, 1]
