@@ -39,6 +39,10 @@ python run_predict.py  --name ssq --windows_size 3,5,7  # 执行双色球模型�
 ```
 预测结果会打印在控制台
 
+# 注意事项：
+1. 使用高于1个batch_size训练后，不能立即预测，必须使用1个batch_size再次训练保存才可以，应该是batch_size维度被保存在inputs里面的原因，也可使用--predict_pro 1 参数进行这个动作
+2. 使用GPU推导时使用的是RNN的CudnnLSTM而非Keras的LSTM，因此两个模型保存的checkpoint不通用！
+
 ## Update
 
 * 有盆友反馈想要个大乐透的预测玩法，加入对大乐透的数据爬取，模型训练，模型预测等功能，通过传入执行参数 --name dlt即可。
