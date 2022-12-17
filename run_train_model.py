@@ -23,10 +23,10 @@ if gpus:
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
-parser.add_argument('--windows_size', default='3,5', type=str, help="训练窗口大小,如有多个，用'，'隔开")
-parser.add_argument('--red_epochs', default=2, type=int, help="红球训练轮数")
-parser.add_argument('--blue_epochs', default=2, type=int, help="蓝球训练轮数")
-parser.add_argument('--batch_size', default=2, type=int, help="集合数量")
+parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
+parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
+parser.add_argument('--batch_size', default=1, type=int, help="集合数量")
 parser.add_argument('--predict_pro', default=0, type=int, help="更新batch_size")
 parser.add_argument('--epochs', default=1, type=int, help="训练轮数(红蓝球交叉训练)")
 args = parser.parse_args()
@@ -61,15 +61,7 @@ def create_train_data(name, windows):
         x_data.append(sub_data[1:])
         y_data.append(sub_data[0])
 
-    cut_num = 6
-    if name == "ssq":
-        cut_num = 6
-    elif name == "dlt":
-        cut_num = 5
-    elif name == "pls":
-        cut_num = 3
-    elif name == "kl8":
-        cut_num = 20
+    cut_num = model_args[name]["model_args"]["red_sequence_len"]
     return {
         "red": {
             "x_data": np.array(x_data)[:, :, :cut_num], "y_data": np.array(y_data)[:, :cut_num]
@@ -161,7 +153,7 @@ def train_red_ball_model(name, x_data, y_data):
                         hotfixed = 1
                     else:
                         hotfixed = 0
-                    logger.info("w_size: {}, index: {}, loss: {}, tag: {}, pred: {}".format(
+                    logger.info("w_size: {}, index: {}, loss: {:.4e}, tag: {}, pred: {}".format(
                         str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, y[0] + hotfixed, pred[0] + hotfixed)
                     )
                     if args.predict_pro == 1:
@@ -173,7 +165,7 @@ def train_red_ball_model(name, x_data, y_data):
                         break
                 if index % epochindex == 0:
                     epoch += 1
-                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1), totalloss / perindex / m_args["model_args"]["batch_size"]))
+                    logger.info("epoch: {}, cost time: {:.4f}, ETA: {:.4f}, per_loss: {:.4e}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["red_epochs"] - epoch - 1), totalloss / perindex / m_args["model_args"]["batch_size"]))
                     epoch_start_time = time.time()
                     perindex = 0
                     totalloss = 0.0
@@ -281,7 +273,7 @@ def train_blue_ball_model(name, x_data, y_data):
                     perindex += 1
                     totalloss += loss_
                     if index % 10 == 0:
-                        logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                        logger.info("w_size: {}, epoch: {}, loss: {:.4e}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_, np.argmax(y[0]) + 1, pred[0] + 1)
                         )
                         if args.predict_pro == 1:
@@ -302,7 +294,7 @@ def train_blue_ball_model(name, x_data, y_data):
                     perindex += 1
                     totalloss += loss_
                     if index % 10 == 0:
-                        logger.info("w_size: {}, epoch: {}, loss: {}, tag: {}, pred: {}".format(
+                        logger.info("w_size: {}, epoch: {}, loss: {:.4e}, tag: {}, pred: {}".format(
                             str(m_args["model_args"]["windows_size"]), str(index) + '/' + str(totalindex), loss_,y[0] + 1, pred[0] + 1)
                         )
                         if args.predict_pro == 1:
@@ -314,7 +306,7 @@ def train_blue_ball_model(name, x_data, y_data):
                             break
                 if index % epochindex == 0:
                     epoch += 1
-                    logger.info("epoch: {}, cost time: {}, ETA: {}, per_loss: {}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1), totalloss / perindex / m_args["model_args"]["batch_size"]))
+                    logger.info("epoch: {}, cost time: {:.4f}, ETA: {:.4f}, per_loss: {:.4e}".format(epoch, time.time() - epoch_start_time, (time.time() - epoch_start_time) * (m_args["model_args"]["blue_epochs"] - epoch - 1), totalloss / perindex / m_args["model_args"]["batch_size"]))
                     epoch_start_time = time.time()
                     perindex = 0
                     totalloss = 0.0
@@ -343,7 +335,7 @@ def action(name):
             logger.info("开始训练【{}】红球模型...".format(name_path[name]["name"]))
             start_time = time.time()
             train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
-            logger.info("训练耗时: {}".format(time.time() - start_time))
+            logger.info("训练耗时: {:.4f}".format(time.time() - start_time))
 
         if name not in ["pls", "kl8"] and model_args[name]["model_args"]["blue_epochs"] > 0:
             tf.compat.v1.reset_default_graph()  # 重置网络图
@@ -351,7 +343,7 @@ def action(name):
             logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))
             start_time = time.time()
             train_blue_ball_model(name, x_data=train_data["blue"]["x_data"], y_data=train_data["blue"]["y_data"])
-            logger.info("训练耗时: {}".format(time.time() - start_time))
+            logger.info("训练耗时: {:.4f}".format(time.time() - start_time))
 
         # 保存预测关键结点名
         with open("{}/{}".format(model_path + model_args[args.name]["pathname"]['name'] + str(model_args[args.name]["model_args"]["windows_size"]), pred_key_name), "w") as f:
@@ -362,12 +354,14 @@ def run(name, windows_size):
     :param name: 玩法
     :return:
     """
+    total_start_time = time.time()
     if int(windows_size[0]) == 0:
         action(name)
     else:
         for size in windows_size:
             model_args[name]["model_args"]["windows_size"] = int(size)
             action(name)
+    logger.info("总耗时: {:.4f}".format(time.time() - total_start_time))
 
 if __name__ == '__main__':
     list_windows_size = args.windows_size.split(",")
