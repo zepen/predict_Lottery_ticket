@@ -3,7 +3,8 @@
 核心代码 fork 自：https://github.com/zepen/predict_Lottery_ticket
 并按照我的思路进行了增强。
 
-目前的代码已经同时支持CPU和GPU计算，但是估计是网络比较浅，GPU速度反而不如CPU。目前我在考虑修改网络结构，并迁移到我比较熟悉的pytorch框架之下.
+目前的代码已经同时支持CPU和GPU计算。CPU使用原本的Keras LSTM，GPU使用CudnnLSTM，同等参数下，GPU效率高于CPU，时间窗口越大，batch_size越大，效率差就越明显；建议有好显卡的朋友使用GPU训练.
+目前我正在修改网络结构，并迁移到我比较熟悉的pytorch框架之下: https://github.com/KittenCN/predict_Lottery_ticket_pytorch
 
 ## Installing
         
