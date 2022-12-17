@@ -23,10 +23,10 @@ if gpus:
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据")
-parser.add_argument('--windows_size', default='3', type=str, help="训练窗口大小,如有多个，用'，'隔开")
-parser.add_argument('--red_epochs', default=1, type=int, help="红球训练轮数")
-parser.add_argument('--blue_epochs', default=1, type=int, help="蓝球训练轮数")
-parser.add_argument('--batch_size', default=1, type=int, help="集合数量")
+parser.add_argument('--windows_size', default='3,5', type=str, help="训练窗口大小,如有多个，用'，'隔开")
+parser.add_argument('--red_epochs', default=2, type=int, help="红球训练轮数")
+parser.add_argument('--blue_epochs', default=2, type=int, help="蓝球训练轮数")
+parser.add_argument('--batch_size', default=2, type=int, help="集合数量")
 parser.add_argument('--predict_pro', default=0, type=int, help="更新batch_size")
 parser.add_argument('--epochs', default=1, type=int, help="训练轮数(红蓝球交叉训练)")
 args = parser.parse_args()
@@ -114,9 +114,10 @@ def train_red_ball_model(name, x_data, y_data):
             name='Adam'
         ).minimize(red_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
+        saver = tf.compat.v1.train.Saver()
         syspath = model_path + model_args[args.name]["pathname"]['name'] + str(m_args["model_args"]["windows_size"]) + model_args[args.name]["subpath"]['red']
         if os.path.exists(syspath):
-            saver = tf.compat.v1.train.Saver()
+            # saver = tf.compat.v1.train.Saver()
             saver.restore(sess, "{}red_ball_model.ckpt".format(syspath))
             logger.info("已加载红球模型！")
 
@@ -135,6 +136,7 @@ def train_red_ball_model(name, x_data, y_data):
         totalloss = 0.0
         while True:
             try:
+                tf.compat.v1.get_default_graph().finalize()
                 x, y = sess.run(nextelement)
                 batch_size = len(x)
                 diff = m_args["model_args"]["batch_size"] - batch_size
@@ -166,7 +168,7 @@ def train_red_ball_model(name, x_data, y_data):
                         pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
                         if not os.path.exists(syspath):
                             os.makedirs(syspath)
-                        saver = tf.compat.v1.train.Saver()
+                        # saver = tf.compat.v1.train.Saver()
                         saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
                         break
                 if index % epochindex == 0:
@@ -179,14 +181,14 @@ def train_red_ball_model(name, x_data, y_data):
                     pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
                         os.makedirs(syspath)
-                    saver = tf.compat.v1.train.Saver()
+                    # saver = tf.compat.v1.train.Saver()
                     saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
             except tf.errors.OutOfRangeError:
                 logger.info("训练完成！")
                 pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
                 if not os.path.exists(syspath):
                     os.makedirs(syspath)
-                saver = tf.compat.v1.train.Saver()
+                # saver = tf.compat.v1.train.Saver()
                 saver.save(sess, "{}{}.{}".format(syspath, red_ball_model_name, extension))
                 break
 
@@ -238,8 +240,9 @@ def train_blue_ball_model(name, x_data, y_data):
         ).minimize(blue_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
         syspath = model_path + model_args[args.name]["pathname"]['name'] + str(m_args["model_args"]["windows_size"]) + model_args[args.name]["subpath"]['blue']
+        saver = tf.compat.v1.train.Saver()
         if os.path.exists(syspath):
-            saver = tf.compat.v1.train.Saver()
+            # saver = tf.compat.v1.train.Saver()
             saver.restore(sess, "{}blue_ball_model.ckpt".format(syspath))
             logger.info("已加载蓝球模型！")
         
@@ -258,6 +261,7 @@ def train_blue_ball_model(name, x_data, y_data):
         totalloss = 0.0
         while True:
             try:
+                tf.compat.v1.get_default_graph().finalize()
                 x, y = sess.run(nextelement)
                 batch_size = len(x)
                 diff = m_args["model_args"]["batch_size"] - batch_size
@@ -284,7 +288,7 @@ def train_blue_ball_model(name, x_data, y_data):
                             pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
                             if not os.path.exists(syspath):
                                 os.mkdir(syspath)
-                            saver = tf.compat.v1.train.Saver()
+                            # saver = tf.compat.v1.train.Saver()
                             saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
                             break
                 else:
@@ -305,7 +309,7 @@ def train_blue_ball_model(name, x_data, y_data):
                             pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
                             if not os.path.exists(syspath):
                                 os.mkdir(syspath)
-                            saver = tf.compat.v1.train.Saver()
+                            # saver = tf.compat.v1.train.Saver()
                             saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
                             break
                 if index % epochindex == 0:
@@ -318,7 +322,7 @@ def train_blue_ball_model(name, x_data, y_data):
                     pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
                     if not os.path.exists(syspath):
                         os.mkdir(syspath)
-                    saver = tf.compat.v1.train.Saver()
+                    # saver = tf.compat.v1.train.Saver()
                     saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
                     
             except tf.errors.OutOfRangeError:
@@ -326,13 +330,11 @@ def train_blue_ball_model(name, x_data, y_data):
                 pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
                 if not os.path.exists(syspath):
                     os.mkdir(syspath)
-                saver = tf.compat.v1.train.Saver()
+                # saver = tf.compat.v1.train.Saver()
                 saver.save(sess, "{}{}.{}".format(syspath, blue_ball_model_name, extension))
                 break
 
 def action(name):
-    tf.compat.v1.reset_default_graph()
-
     logger.info("正在创建【{}】数据集...".format(name_path[name]["name"]))
     train_data = create_train_data(args.name, model_args[name]["model_args"]["windows_size"])
     for i in range(args.epochs):
