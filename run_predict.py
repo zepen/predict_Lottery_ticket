@@ -80,19 +80,22 @@ def get_year():
     return int(str(datetime.datetime.now().year)[-2:])
 
 
-def try_error(name, predict_features, windows_size):
+def try_error(mode, name, predict_features, windows_size):
     """ 处理异常
     """
-    if len(predict_features) != windows_size:
-        logger.warning("期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")
-        last_current_year = (get_year() - 1) * 1000
-        max_times = 160
-        while len(predict_features) != 3:
-            predict_features = spider(name, last_current_year + max_times, get_current_number(name), "predict")[[x[0] for x in ball_name]]
-            time.sleep(np.random.random(1).tolist()[0])
-            max_times -= 1
+    if mode:
         return predict_features
-    return predict_features
+    else:
+        if len(predict_features) != windows_size:
+            logger.warning("期号出现跳期，期号不连续！开始查找最近上一期期号！本期预测时间较久！")
+            last_current_year = (get_year() - 1) * 1000
+            max_times = 160
+            while len(predict_features) != 3:
+                predict_features = spider(name, last_current_year + max_times, get_current_number(name), "predict")[[x[0] for x in ball_name]]
+                time.sleep(np.random.random(1).tolist()[0])
+                max_times -= 1
+            return predict_features
+        return predict_features
 
 
 def get_red_ball_predict_result(predict_features, sequence_len, windows_size):
@@ -157,9 +160,10 @@ def get_final_result(name, predict_features, mode=0):
 def run(name):
     windows_size = model_args[name]["model_args"]["windows_size"]
     diff_number = windows_size - 1
-    data = spider(name, str(int(current_number) - diff_number), current_number, "predict")
+    data = spider(name, 1, current_number, "predict") 
+    # print(data)
     logger.info("【{}】预测期号：{}".format(name_path[name]["name"], int(current_number) + 1))
-    predict_features_ = try_error(name, data, windows_size)
+    predict_features_ = try_error(1, name, data.iloc[:windows_size], windows_size)
     logger.info("预测结果：{}".format(get_final_result(name, predict_features_)))
 
 
