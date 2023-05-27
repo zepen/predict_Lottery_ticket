@@ -119,6 +119,8 @@ def train_blue_ball_model(name, x_data, y_data):
     if name == "ssq":
         x_data = x_data.reshape(len(x_data), m_args["model_args"]["windows_size"])
         y_data = tf.keras.utils.to_categorical(y_data - 1, num_classes=m_args["model_args"]["blue_n_class"])
+    else:
+        y_data = y_data - 1
     logger.info("特征数据维度: {}".format(x_data.shape))
     logger.info("标签数据维度: {}".format(y_data.shape))
     with tf.compat.v1.Session() as sess:
@@ -191,7 +193,7 @@ def run(name):
     """
 
     logger.info("正在创建【{}】数据集...".format(name_path[name]["name"]))
-    train_data = create_train_data(args.name, model_args[name]["model_args"]["windows_size"])
+    train_data = create_train_data(name, model_args[name]["model_args"]["windows_size"])
 
     logger.info("开始训练【{}】红球模型...".format(name_path[name]["name"]))
     start_time = time.time()
