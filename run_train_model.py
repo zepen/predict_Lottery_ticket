@@ -61,7 +61,7 @@ def create_train_test_data(name, windows, train_test_split):
     train_data = create_data(data.iloc[:int(len(data) * train_test_split)], "ssq", windows)
     test_data = create_data(data.iloc[int(len(data) * train_test_split):], "ssq", windows)
     logger.info(
-        "train_data sample rate = {}, test_data sample rate = {}".format(train_test_split, 1 - train_test_split))
+        "train_data sample rate = {}, test_data sample rate = {}".format(train_test_split, round(1 - train_test_split, 2)))
     return train_data, test_data
 
 
@@ -76,7 +76,7 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
 
     x_test = x_test - 1
     y_test = y_test - 1
-    test_data_len = x_train.shape[0]
+    test_data_len = x_test.shape[0]
     logger.info("测试特征数据维度: {}".format(x_test.shape))
     logger.info("测试标签数据维度: {}".format(y_test.shape))
 
@@ -133,7 +133,7 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
                     "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]] * 1) \
                     if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]] * 1)
                 })
-            count = np.sum(true == pred)
+            count = np.sum(true == pred + 1)
             all_true_count += count
             if count in eval_d:
                 eval_d[count] += 1
@@ -250,7 +250,7 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
                     "inputs:0": x_test[j:(j + 1), :, :],
                     "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * 1)
                 })
-            count = np.sum(true == pred)
+            count = np.sum(true == pred + 1)
             all_true_count += count
             if count in eval_d:
                 eval_d[count] += 1
