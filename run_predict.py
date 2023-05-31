@@ -19,57 +19,61 @@ args = parser.parse_args()
 # 关闭eager模式
 tf.compat.v1.disable_eager_execution()
 
-if args.name == "ssq":
-    red_graph = tf.compat.v1.Graph()
-    with red_graph.as_default():
-        red_saver = tf.compat.v1.train.import_meta_graph(
-            "{}red_ball_model.ckpt.meta".format(model_args[args.name]["path"]["red"])
-        )
-    red_sess = tf.compat.v1.Session(graph=red_graph)
-    red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
-    logger.info("已加载红球模型！")
 
-    blue_graph = tf.compat.v1.Graph()
-    with blue_graph.as_default():
-        blue_saver = tf.compat.v1.train.import_meta_graph(
-            "{}blue_ball_model.ckpt.meta".format(model_args[args.name]["path"]["blue"])
-        )
-    blue_sess = tf.compat.v1.Session(graph=blue_graph)
-    blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
-    logger.info("已加载蓝球模型！")
+def load_model(name):
+    """ 加载模型 """
+    if name == "ssq":
+        red_graph = tf.compat.v1.Graph()
+        with red_graph.as_default():
+            red_saver = tf.compat.v1.train.import_meta_graph(
+                "{}red_ball_model.ckpt.meta".format(model_args[args.name]["path"]["red"])
+            )
+        red_sess = tf.compat.v1.Session(graph=red_graph)
+        red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
+        logger.info("已加载红球模型！")
 
-    # 加载关键节点名
-    with open("{}/{}/{}".format(model_path, args.name, pred_key_name)) as f:
-        pred_key_d = json.load(f)
+        blue_graph = tf.compat.v1.Graph()
+        with blue_graph.as_default():
+            blue_saver = tf.compat.v1.train.import_meta_graph(
+                "{}blue_ball_model.ckpt.meta".format(model_args[args.name]["path"]["blue"])
+            )
+        blue_sess = tf.compat.v1.Session(graph=blue_graph)
+        blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
+        logger.info("已加载蓝球模型！")
 
-    current_number = get_current_number(args.name)
-    logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
+        # 加载关键节点名
+        with open("{}/{}/{}".format(model_path, args.name, pred_key_name)) as f:
+            pred_key_d = json.load(f)
 
-else:
-    red_graph = tf.compat.v1.Graph()
-    with red_graph.as_default():
-        red_saver = tf.compat.v1.train.import_meta_graph(
-            "{}red_ball_model.ckpt.meta".format(model_args[args.name]["path"]["red"])
-        )
-    red_sess = tf.compat.v1.Session(graph=red_graph)
-    red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
-    logger.info("已加载红球模型！")
+        current_number = get_current_number(args.name)
+        logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
+        return red_graph, red_sess, blue_graph, blue_sess, pred_key_d, current_number
+    else:
+        red_graph = tf.compat.v1.Graph()
+        with red_graph.as_default():
+            red_saver = tf.compat.v1.train.import_meta_graph(
+                "{}red_ball_model.ckpt.meta".format(model_args[args.name]["path"]["red"])
+            )
+        red_sess = tf.compat.v1.Session(graph=red_graph)
+        red_saver.restore(red_sess, "{}red_ball_model.ckpt".format(model_args[args.name]["path"]["red"]))
+        logger.info("已加载红球模型！")
 
-    blue_graph = tf.compat.v1.Graph()
-    with blue_graph.as_default():
-        blue_saver = tf.compat.v1.train.import_meta_graph(
-            "{}blue_ball_model.ckpt.meta".format(model_args[args.name]["path"]["blue"])
-        )
-    blue_sess = tf.compat.v1.Session(graph=blue_graph)
-    blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
-    logger.info("已加载蓝球模型！")
+        blue_graph = tf.compat.v1.Graph()
+        with blue_graph.as_default():
+            blue_saver = tf.compat.v1.train.import_meta_graph(
+                "{}blue_ball_model.ckpt.meta".format(model_args[args.name]["path"]["blue"])
+            )
+        blue_sess = tf.compat.v1.Session(graph=blue_graph)
+        blue_saver.restore(blue_sess, "{}blue_ball_model.ckpt".format(model_args[args.name]["path"]["blue"]))
+        logger.info("已加载蓝球模型！")
 
-    # 加载关键节点名
-    with open("{}/{}/{}".format(model_path,args.name , pred_key_name)) as f:
-        pred_key_d = json.load(f)
+        # 加载关键节点名
+        with open("{}/{}/{}".format(model_path,args.name , pred_key_name)) as f:
+            pred_key_d = json.load(f)
 
-    current_number = get_current_number(args.name)
-    logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
+        current_number = get_current_number(args.name)
+        logger.info("【{}】最近一期:{}".format(name_path[args.name]["name"], current_number))
+        return red_graph, red_sess, blue_graph, blue_sess, pred_key_d, current_number
 
 
 def get_year():
@@ -98,7 +102,7 @@ def try_error(mode, name, predict_features, windows_size):
         return predict_features
 
 
-def get_red_ball_predict_result(predict_features, sequence_len, windows_size):
+def get_red_ball_predict_result(red_graph, red_sess, pred_key_d, predict_features, sequence_len, windows_size):
     """ 获取红球预测结果
     """
     name_list = [(ball_name[0], i + 1) for i in range(sequence_len)]
@@ -112,7 +116,7 @@ def get_red_ball_predict_result(predict_features, sequence_len, windows_size):
     return pred, name_list
 
 
-def get_blue_ball_predict_result(name, predict_features, sequence_len, windows_size):
+def get_blue_ball_predict_result(blue_graph, blue_sess, pred_key_d, name, predict_features, sequence_len, windows_size):
     """ 获取蓝球预测结果
     """
     if name == "ssq":
@@ -135,21 +139,33 @@ def get_blue_ball_predict_result(name, predict_features, sequence_len, windows_s
         return pred, name_list
 
 
-def get_final_result(name, predict_features, mode=0):
+def get_final_result(red_graph, red_sess, blue_graph, blue_sess, pred_key_d, name, predict_features, mode=0):
     """" 最终预测函数
     """
     m_args = model_args[name]["model_args"]
     if name == "ssq":
-        red_pred, red_name_list = get_red_ball_predict_result(predict_features, m_args["sequence_len"], m_args["windows_size"])
-        blue_pred = get_blue_ball_predict_result(name, predict_features, 0, m_args["windows_size"])
+        red_pred, red_name_list = get_red_ball_predict_result(
+            red_graph, red_sess, pred_key_d,
+            predict_features, m_args["sequence_len"], m_args["windows_size"]
+        )
+        blue_pred = get_blue_ball_predict_result(
+            blue_graph, blue_sess, pred_key_d,
+            name, predict_features, 0, m_args["windows_size"]
+        )
         ball_name_list = ["{}_{}".format(name[mode], i) for name, i in red_name_list] + [ball_name[1][mode]]
         pred_result_list = red_pred[0].tolist() + blue_pred.tolist()
         return {
             b_name: int(res) + 1 for b_name, res in zip(ball_name_list, pred_result_list)
         }
     else:
-        red_pred, red_name_list = get_red_ball_predict_result(predict_features, m_args["red_sequence_len"], m_args["windows_size"])
-        blue_pred, blue_name_list = get_blue_ball_predict_result(name, predict_features, m_args["blue_sequence_len"], m_args["windows_size"])
+        red_pred, red_name_list = get_red_ball_predict_result(
+            red_graph, red_sess, pred_key_d,
+            predict_features, m_args["red_sequence_len"], m_args["windows_size"]
+        )
+        blue_pred, blue_name_list = get_blue_ball_predict_result(
+            blue_graph, blue_sess, pred_key_d,
+            name, predict_features, m_args["blue_sequence_len"], m_args["windows_size"]
+        )
         ball_name_list = ["{}_{}".format(name[mode], i) for name, i in red_name_list] + ["{}_{}".format(name[mode], i) for name, i in blue_name_list]
         pred_result_list = red_pred[0].tolist() + blue_pred[0].tolist()
         return {
@@ -158,13 +174,18 @@ def get_final_result(name, predict_features, mode=0):
 
 
 def run(name):
-    windows_size = model_args[name]["model_args"]["windows_size"]
-    diff_number = windows_size - 1
-    data = spider(name, 1, current_number, "predict") 
-    # print(data)
-    logger.info("【{}】预测期号：{}".format(name_path[name]["name"], int(current_number) + 1))
-    predict_features_ = try_error(1, name, data.iloc[:windows_size], windows_size)
-    logger.info("预测结果：{}".format(get_final_result(name, predict_features_)))
+    """ 执行预测 """
+    try:
+        red_graph, red_sess, blue_graph, blue_sess, pred_key_d, current_number = load_model(name)
+        windows_size = model_args[name]["model_args"]["windows_size"]
+        data = spider(name, 1, current_number, "predict")
+        logger.info("【{}】预测期号：{}".format(name_path[name]["name"], int(current_number) + 1))
+        predict_features_ = try_error(1, name, data.iloc[:windows_size], windows_size)
+        logger.info("预测结果：{}".format(get_final_result(
+            red_graph, red_sess, blue_graph, blue_sess, pred_key_d, name, predict_features_))
+        )
+    except Exception as e:
+        logger.info("模型加载失败，检查模型是否训练，错误：{}".format(e))
 
 
 if __name__ == '__main__':

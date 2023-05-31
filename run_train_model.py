@@ -13,18 +13,19 @@ from loguru import logger
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
+parser.add_argument('--train_test_split', default=0.7, type=float, help="训练集占比")
 args = parser.parse_args()
 
 pred_key = {}
 
 
-def create_train_data(name, windows):
+def create_data(data, name, windows):
     """ 创建训练数据
+    :param data: 数据集
     :param name: 玩法，双色球/大乐透
     :param windows: 训练窗口
     :return:
     """
-    data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))
     if not len(data):
         raise logger.error(" 请执行 get_data.py 进行数据下载！")
     else:
@@ -52,19 +53,35 @@ def create_train_data(name, windows):
     }
 
 
-def train_red_ball_model(name, x_data, y_data):
-    """ 红球模型训练
-    :param name: 玩法
-    :param x_data: 训练样本
-    :param y_data: 训练标签
-    :return:
-    """
+def create_train_test_data(name, windows, train_test_split):
+    """ 划分数据集 """
+    data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))
+    sample_data = data.sample(frac=train_test_split)
+    train_data = create_data(sample_data, name, windows)
+    merge_data = pd.merge(data, sample_data[["期数"]], how="left", on="期数")
+    out_data = merge_data.loc[merge_data["期数_y"].isna()]
+    test_data = create_data(out_data, name, windows)
+    logger.info("train_data size = {}, test_data size = {}".format(len(train_data), len(test_data)))
+    return train_data, test_data
+
+
+def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
+    """ 红球模型训练与评估 """
     m_args = model_args[name]
-    x_data = x_data - 1
-    y_data = y_data - 1
-    data_len = x_data.shape[0]
-    logger.info("特征数据维度: {}".format(x_data.shape))
-    logger.info("标签数据维度: {}".format(y_data.shape))
+    x_train = x_train - 1
+    y_train = y_train - 1
+    train_data_len = x_train.shape[0]
+    logger.info("训练特征数据维度: {}".format(x_train.shape))
+    logger.info("训练标签数据维度: {}".format(y_train.shape))
+
+    x_test = x_test - 1
+    y_test = y_test - 1
+    test_data_len = x_train.shape[0]
+    logger.info("测试特征数据维度: {}".format(x_test.shape))
+    logger.info("测试标签数据维度: {}".format(y_test.shape))
+
+    start_time = time.time()
+
     with tf.compat.v1.Session() as sess:
         red_ball_model = LstmWithCRFModel(
             batch_size=m_args["model_args"]["batch_size"],
@@ -86,43 +103,76 @@ def train_red_ball_model(name, x_data, y_data):
         ).minimize(red_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
         for epoch in range(m_args["model_args"]["red_epochs"]):
-            for i in range(data_len):
+            for i in range(train_data_len):
                 _, loss_, pred = sess.run([
                     train_step, red_ball_model.loss, red_ball_model.pred_sequence
                 ], feed_dict={
-                    "inputs:0": x_data[i:(i+1), :, :],
-                    "tag_indices:0": y_data[i:(i+1), :],
+                    "inputs:0": x_train[i:(i+1), :, :],
+                    "tag_indices:0": y_train[i:(i+1), :],
                     "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*1) \
                         if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*1)
                 })
                 if i % 100 == 0:
                     logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                        epoch, loss_, y_data[i:(i+1), :][0] + 1, pred[0] + 1)
+                        epoch, loss_, y_train[i:(i+1), :][0] + 1, pred[0] + 1)
                     )
+        logger.info("训练耗时: {}".format(time.time() - start_time))
         pred_key[ball_name[0][0]] = red_ball_model.pred_sequence.name
         if not os.path.exists(m_args["path"]["red"]):
             os.makedirs(m_args["path"]["red"])
         saver = tf.compat.v1.train.Saver()
         saver.save(sess, "{}{}.{}".format(m_args["path"]["red"], red_ball_model_name, extension))
+        logger.info("模型评估【{}】...".format(name_path[name]["name"]))
+        eval_d = {}
+        all_true_count = 0
+        for j in range(test_data_len):
+            true = y_test[j:(j + 1), :]
+            pred = sess.run(red_ball_model.pred_sequence
+                , feed_dict={
+                    "inputs:0": x_test[j:(j + 1), :, :],
+                    "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]] * 1) \
+                    if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]] * 1)
+                })
+            count = np.sum(true == pred)
+            all_true_count += count
+            if count in eval_d:
+                eval_d[count] += 1
+            else:
+                eval_d[count] = 1
+        for k, v in eval_d.items():
+            logger.info("命中{}个球占比: {}%".format(k, round(v / test_data_len, 4) * 100))
+        logger.info(
+            "整体准确率: {}%".format(
+                round(all_true_count / (test_data_len * m_args["model_args"]["red_sequence_len"]), 4) * 100
+            )
+        )
 
 
-def train_blue_ball_model(name, x_data, y_data):
-    """ 蓝球模型训练
-    :param name: 玩法
-    :param x_data: 训练样本
-    :param y_data: 训练标签
-    :return:
-    """
+def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
+    """ 蓝球模型训练与评估 """
     m_args = model_args[name]
-    x_data = x_data - 1
-    data_len = x_data.shape[0]
+    x_train = x_train - 1
+    train_data_len = x_train.shape[0]
     if name == "ssq":
-        x_data = x_data.reshape(len(x_data), m_args["model_args"]["windows_size"])
-        y_data = tf.keras.utils.to_categorical(y_data - 1, num_classes=m_args["model_args"]["blue_n_class"])
+        x_train = x_train.reshape(len(x_train), m_args["model_args"]["windows_size"])
+        y_train = tf.keras.utils.to_categorical(y_train - 1, num_classes=m_args["model_args"]["blue_n_class"])
     else:
-        y_data = y_data - 1
-    logger.info("特征数据维度: {}".format(x_data.shape))
-    logger.info("标签数据维度: {}".format(y_data.shape))
+        y_train = y_train - 1
+    logger.info("训练特征数据维度: {}".format(x_train.shape))
+    logger.info("训练标签数据维度: {}".format(y_train.shape))
+
+    x_test = x_test - 1
+    test_data_len = x_test.shape[0]
+    if name == "ssq":
+        x_test = x_test.reshape(len(x_test), m_args["model_args"]["windows_size"])
+        y_test = tf.keras.utils.to_categorical(y_test - 1, num_classes=m_args["model_args"]["blue_n_class"])
+    else:
+        y_test = y_test - 1
+    logger.info("训练特征数据维度: {}".format(x_test.shape))
+    logger.info("训练标签数据维度: {}".format(y_test.shape))
+
+    start_time = time.time()
+
     with tf.compat.v1.Session() as sess:
         if name == "ssq":
             blue_ball_model = SignalLstmModel(
@@ -155,58 +205,91 @@ def train_blue_ball_model(name, x_data, y_data):
         ).minimize(blue_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
         for epoch in range(m_args["model_args"]["blue_epochs"]):
-            for i in range(data_len):
+            for i in range(train_data_len):
                 if name == "ssq":
                     _, loss_, pred = sess.run([
                         train_step, blue_ball_model.loss, blue_ball_model.pred_label
                     ], feed_dict={
-                        "inputs:0": x_data[i:(i+1), :],
-                        "tag_indices:0": y_data[i:(i+1), :],
+                        "inputs:0": x_train[i:(i+1), :],
+                        "tag_indices:0": y_train[i:(i+1), :],
                     })
                     if i % 100 == 0:
                         logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                            epoch, loss_, np.argmax(y_data[i:(i+1), :][0]) + 1, pred[0] + 1)
+                            epoch, loss_, np.argmax(y_train[i:(i+1), :][0]) + 1, pred[0] + 1)
                         )
                 else:
                     _, loss_, pred = sess.run([
                         train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
                     ], feed_dict={
-                        "inputs:0": x_data[i:(i + 1), :, :],
-                        "tag_indices:0": y_data[i:(i + 1), :],
+                        "inputs:0": x_train[i:(i + 1), :, :],
+                        "tag_indices:0": y_train[i:(i + 1), :],
                         "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * 1)
                     })
                     if i % 100 == 0:
                         logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
-                            epoch, loss_, y_data[i:(i + 1), :][0] + 1, pred[0] + 1)
+                            epoch, loss_, y_train[i:(i + 1), :][0] + 1, pred[0] + 1)
                         )
+        logger.info("训练耗时: {}".format(time.time() - start_time))
         pred_key[ball_name[1][0]] = blue_ball_model.pred_label.name if name == "ssq" else blue_ball_model.pred_sequence.name
         if not os.path.exists(m_args["path"]["blue"]):
             os.mkdir(m_args["path"]["blue"])
         saver = tf.compat.v1.train.Saver()
         saver.save(sess, "{}{}.{}".format(m_args["path"]["blue"], blue_ball_model_name, extension))
+        logger.info("模型评估【{}】...".format(name_path[name]["name"]))
+        eval_d = {}
+        all_true_count = 0
+        for j in range(test_data_len):
+            if name == "ssq":
+                true = y_test[j:(j + 1), :]
+                pred = sess.run(blue_ball_model.pred_label
+                , feed_dict={"inputs:0": x_test[j:(j + 1), :]})
+            else:
+                true = y_test[j:(j + 1), :]
+                pred = sess.run(blue_ball_model.pred_sequence
+                , feed_dict={
+                    "inputs:0": x_test[j:(j + 1), :, :],
+                    "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * 1)
+                })
+            count = np.sum(true == pred)
+            all_true_count += count
+            if count in eval_d:
+                eval_d[count] += 1
+            else:
+                eval_d[count] = 1
+        for k, v in eval_d.items():
+            logger.info("命中{}个球占比: {}%".format(k, round(v / test_data_len, 4) * 100))
+        logger.info(
+            "整体准确率: {}%".format(
+                round(all_true_count / (test_data_len * m_args["model_args"]["blue_sequence_len"]), 4) * 100
+            )
+        )
 
 
-def run(name):
+def run(name, train_test_split):
     """ 执行训练
     :param name: 玩法
+    :param train_test_split: 训练集划分
     :return:
     """
-
-    logger.info("正在创建【{}】数据集...".format(name_path[name]["name"]))
-    train_data = create_train_data(name, model_args[name]["model_args"]["windows_size"])
-
+    logger.info("正在创建【{}】训练集和测试集...".format(name_path[name]["name"]))
+    train_data, test_data = create_train_test_data(
+        name, model_args[name]["model_args"]["windows_size"], train_test_split
+    )
     logger.info("开始训练【{}】红球模型...".format(name_path[name]["name"]))
-    start_time = time.time()
-    train_red_ball_model(name, x_data=train_data["red"]["x_data"], y_data=train_data["red"]["y_data"])
-    logger.info("训练耗时: {}".format(time.time() - start_time))
+    train_with_eval_red_ball_model(
+        name,
+        x_train=train_data["red"]["x_data"], y_train=train_data["red"]["y_data"],
+        x_test=test_data["red"]["x_data"], y_test=test_data["red"]["y_data"],
+    )
 
     tf.compat.v1.reset_default_graph()  # 重置网络图
 
     logger.info("开始训练【{}】蓝球模型...".format(name_path[name]["name"]))
-    start_time = time.time()
-    train_blue_ball_model(name, x_data=train_data["blue"]["x_data"], y_data=train_data["blue"]["y_data"])
-    logger.info("训练耗时: {}".format(time.time() - start_time))
-
+    train_with_eval_blue_ball_model(
+        name,
+        x_train=train_data["blue"]["x_data"], y_train=train_data["blue"]["y_data"],
+        x_test=test_data["blue"]["x_data"], y_test=test_data["blue"]["y_data"]
+    )
     # 保存预测关键结点名
     with open("{}/{}/{}".format(model_path, name, pred_key_name), "w") as f:
         json.dump(pred_key, f)
@@ -216,4 +299,4 @@ if __name__ == '__main__':
     if not args.name:
         raise Exception("玩法名称不能为空！")
     else:
-        run(args.name)
+        run(args.name, args.train_test_split)
