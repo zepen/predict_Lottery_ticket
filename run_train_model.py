@@ -102,6 +102,8 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
             name='Adam'
         ).minimize(red_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
+        sequence_len = m_args["model_args"]["sequence_len"] \
+            if name == "ssq" else m_args["model_args"]["red_sequence_len"]
         for epoch in range(m_args["model_args"]["red_epochs"]):
             for i in range(train_data_len):
                 _, loss_, pred = sess.run([
@@ -109,8 +111,7 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
                 ], feed_dict={
                     "inputs:0": x_train[i:(i+1), :, :],
                     "tag_indices:0": y_train[i:(i+1), :],
-                    "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]]*1) \
-                        if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]]*1)
+                    "sequence_length:0": np.array([sequence_len]*1)
                 })
                 if i % 100 == 0:
                     logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
@@ -130,8 +131,7 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
             pred = sess.run(red_ball_model.pred_sequence
                 , feed_dict={
                     "inputs:0": x_test[j:(j + 1), :, :],
-                    "sequence_length:0": np.array([m_args["model_args"]["sequence_len"]] * 1) \
-                    if name == "ssq" else np.array([m_args["model_args"]["red_sequence_len"]] * 1)
+                    "sequence_length:0": np.array([sequence_len] * 1)
                 })
             count = np.sum(true == pred + 1)
             all_true_count += count
@@ -140,10 +140,10 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
             else:
                 eval_d[count] = 1
         for k, v in eval_d.items():
-            logger.info("命中{}个球占比: {}%".format(k, round(v / test_data_len, 4) * 100))
+            logger.info("命中{}个球占比: {}%".format(k, round(v * 100 / test_data_len, 4)))
         logger.info(
             "整体准确率: {}%".format(
-                round(all_true_count / (test_data_len * m_args["model_args"]["red_sequence_len"]), 4) * 100
+                round(all_true_count * 100 / (test_data_len * sequence_len), 4)
             )
         )
 
@@ -204,6 +204,7 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
             name='Adam'
         ).minimize(blue_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
+        sequence_len = m_args["model_args"]["blue_sequence_len"]
         for epoch in range(m_args["model_args"]["blue_epochs"]):
             for i in range(train_data_len):
                 if name == "ssq":
@@ -218,12 +219,13 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
                             epoch, loss_, np.argmax(y_train[i:(i+1), :][0]) + 1, pred[0] + 1)
                         )
                 else:
+
                     _, loss_, pred = sess.run([
                         train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
                     ], feed_dict={
                         "inputs:0": x_train[i:(i + 1), :, :],
                         "tag_indices:0": y_train[i:(i + 1), :],
-                        "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * 1)
+                        "sequence_length:0": np.array([sequence_len] * 1)
                     })
                     if i % 100 == 0:
                         logger.info("epoch: {}, loss: {}, tag: {}, pred: {}".format(
@@ -248,7 +250,7 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
                 pred = sess.run(blue_ball_model.pred_sequence
                 , feed_dict={
                     "inputs:0": x_test[j:(j + 1), :, :],
-                    "sequence_length:0": np.array([m_args["model_args"]["blue_sequence_len"]] * 1)
+                    "sequence_length:0": np.array([sequence_len] * 1)
                 })
             count = np.sum(true == pred + 1)
             all_true_count += count
@@ -257,10 +259,10 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
             else:
                 eval_d[count] = 1
         for k, v in eval_d.items():
-            logger.info("命中{}个球占比: {}%".format(k, round(v / test_data_len, 4) * 100))
+            logger.info("命中{}个球占比: {}%".format(k, round(v * 100 / test_data_len, 4)))
         logger.info(
             "整体准确率: {}%".format(
-                round(all_true_count / (test_data_len * m_args["model_args"]["blue_sequence_len"]), 4) * 100
+                round(all_true_count * 100 / (test_data_len * sequence_len), 4)
             )
         )
 
