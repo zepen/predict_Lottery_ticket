@@ -139,11 +139,12 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
                 eval_d[count] += 1
             else:
                 eval_d[count] = 1
+        logger.info("测试期数: {}".format(test_data_len))
         for k, v in eval_d.items():
-            logger.info("命中{}个球占比: {}%".format(k, round(v * 100 / test_data_len, 4)))
+            logger.info("命中{}个球，{}期，占比: {}%".format(k, v, round(v * 100 / test_data_len, 2)))
         logger.info(
             "整体准确率: {}%".format(
-                round(all_true_count * 100 / (test_data_len * sequence_len), 4)
+                round(all_true_count * 100 / (test_data_len * sequence_len), 2)
             )
         )
 
@@ -204,7 +205,7 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
             name='Adam'
         ).minimize(blue_ball_model.loss)
         sess.run(tf.compat.v1.global_variables_initializer())
-        sequence_len = m_args["model_args"]["blue_sequence_len"]
+        sequence_len = "" if name == "ssq" else m_args["model_args"]["blue_sequence_len"]
         for epoch in range(m_args["model_args"]["blue_epochs"]):
             for i in range(train_data_len):
                 if name == "ssq":
@@ -219,7 +220,6 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
                             epoch, loss_, np.argmax(y_train[i:(i+1), :][0]) + 1, pred[0] + 1)
                         )
                 else:
-
                     _, loss_, pred = sess.run([
                         train_step, blue_ball_model.loss, blue_ball_model.pred_sequence
                     ], feed_dict={
@@ -258,13 +258,21 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
                 eval_d[count] += 1
             else:
                 eval_d[count] = 1
+        logger.info("测试期数: {}".format(test_data_len))
         for k, v in eval_d.items():
-            logger.info("命中{}个球占比: {}%".format(k, round(v * 100 / test_data_len, 4)))
-        logger.info(
-            "整体准确率: {}%".format(
-                round(all_true_count * 100 / (test_data_len * sequence_len), 4)
+            logger.info("命中{}个球，{}期，占比: {}%".format(k, v, round(v * 100 / test_data_len, 2)))
+        if name == "ssq":
+            logger.info(
+                "整体准确率: {}%".format(
+                    round(all_true_count * 100 / test_data_len, 2)
+                )
             )
-        )
+        else:
+            logger.info(
+                "整体准确率: {}%".format(
+                    round(all_true_count * 100 / (test_data_len * sequence_len), 2)
+                )
+            )
 
 
 def run(name, train_test_split):
