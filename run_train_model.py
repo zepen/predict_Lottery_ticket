@@ -13,7 +13,7 @@ from loguru import logger
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择训练数据: 双色球/大乐透")
-parser.add_argument('--train_test_split', default=0.7, type=float, help="训练集占比")
+parser.add_argument('--train_test_split', default=0.7, type=float, help="训练集占比, 设置大于0.5")
 args = parser.parse_args()
 
 pred_key = {}
@@ -55,13 +55,13 @@ def create_data(data, name, windows):
 
 def create_train_test_data(name, windows, train_test_split):
     """ 划分数据集 """
+    if train_test_split < 0.5:
+        raise "训练集采样比例小于50%,训练终止,请求重新采样（train_test_split>0.5）!"
     data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))
-    sample_data = data.sample(frac=train_test_split)
-    train_data = create_data(sample_data, name, windows)
-    merge_data = pd.merge(data, sample_data[["期数"]], how="left", on="期数")
-    out_data = merge_data.loc[merge_data["期数_y"].isna()]
-    test_data = create_data(out_data, name, windows)
-    logger.info("train_data size = {}, test_data size = {}".format(len(train_data), len(test_data)))
+    train_data = create_data(data.iloc[:int(len(data) * train_test_split)], "ssq", windows)
+    test_data = create_data(data.iloc[int(len(data) * train_test_split):], "ssq", windows)
+    logger.info(
+        "train_data sample rate = {}, test_data sample rate = {}".format(train_test_split, 1 - train_test_split))
     return train_data, test_data
 
 
