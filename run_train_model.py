@@ -104,6 +104,7 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
         sess.run(tf.compat.v1.global_variables_initializer())
         sequence_len = m_args["model_args"]["sequence_len"] \
             if name == "ssq" else m_args["model_args"]["red_sequence_len"]
+        print(sequence_len)
         for epoch in range(m_args["model_args"]["red_epochs"]):
             for i in range(train_data_len):
                 _, loss_, pred = sess.run([
