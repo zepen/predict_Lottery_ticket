@@ -57,9 +57,11 @@ def create_train_test_data(name, windows, train_test_split):
     """ 划分数据集 """
     if train_test_split < 0.5:
         raise "训练集采样比例小于50%,训练终止,请求重新采样（train_test_split>0.5）!"
-    data = pd.read_csv("{}{}".format(name_path[name]["path"], data_file_name))
-    train_data = create_data(data.iloc[:int(len(data) * train_test_split)], "ssq", windows)
-    test_data = create_data(data.iloc[int(len(data) * train_test_split):], "ssq", windows)
+    path = "{}{}".format(name_path[name]["path"], data_file_name)
+    data = pd.read_csv(path)
+    logger.info("read data from path: {}".format(path))
+    train_data = create_data(data.iloc[:int(len(data) * train_test_split)], name, windows)
+    test_data = create_data(data.iloc[int(len(data) * train_test_split):], name, windows)
     logger.info(
         "train_data sample rate = {}, test_data sample rate = {}".format(train_test_split, round(1 - train_test_split, 2)))
     return train_data, test_data
@@ -106,7 +108,6 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
             if name == "ssq" else m_args["model_args"]["red_sequence_len"]
         for epoch in range(m_args["model_args"]["red_epochs"]):
             for i in range(train_data_len):
-                print(x_train[i:(i+1), :, :])
                 _, loss_, pred = sess.run([
                     train_step, red_ball_model.loss, red_ball_model.pred_sequence
                 ], feed_dict={
