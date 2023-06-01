@@ -1,6 +1,6 @@
 tensorflow-cpu==2.6.1
 tensorflow-addons==0.10.0
-requests==2.22.0
+requests==2.31.0
 keras==2.6.0
 beautifulsoup4==4.9.3
 pandas==1.0.0
