@@ -37,27 +37,27 @@ class LotteryDataCrawler:
         self.zodiac_mapping = self.create_zodiac_mapping()
     
     def create_color_mapping(self):
-        """创建波色映射表"""
-        # 根据传统六合彩规则：
-        # 绿波生肖：鼠、兔、马、鸡
-        # 红波生肖：牛、龙、羊、狗  
-        # 蓝波生肖：虎、蛇、猴、猪
+        """创建波色映射表 - 基于网站实际数据"""
+        # 根据网站 https://kj.123720c.com/kj/zl.html 的实际数据：
+        # 红波：01, 02, 07, 08, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46
+        # 蓝波：03, 04, 09, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48
+        # 绿波：05, 06, 11, 16, 17, 21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49
         color_mapping = {}
         
-        # 绿波生肖：鼠、兔、马、鸡
-        green_numbers = [1, 13, 25, 37, 49, 4, 16, 28, 40, 7, 19, 31, 43, 10, 22, 34, 46]
-        for num in green_numbers:
-            color_mapping[num] = '绿'
-        
-        # 红波生肖：牛、龙、羊、狗
-        red_numbers = [2, 14, 26, 38, 5, 17, 29, 41, 8, 20, 32, 44, 11, 23, 35, 47]
+        # 红波
+        red_numbers = [1, 2, 7, 8, 12, 13, 18, 19, 23, 24, 29, 30, 34, 35, 40, 45, 46]
         for num in red_numbers:
             color_mapping[num] = '红'
         
-        # 蓝波生肖：虎、蛇、猴、猪
-        blue_numbers = [3, 15, 27, 39, 6, 18, 30, 42, 9, 21, 33, 45, 12, 24, 36, 48]
+        # 蓝波
+        blue_numbers = [3, 4, 9, 10, 14, 15, 20, 25, 26, 31, 36, 37, 41, 42, 47, 48]
         for num in blue_numbers:
             color_mapping[num] = '蓝'
+        
+        # 绿波
+        green_numbers = [5, 6, 11, 16, 17, 21, 22, 27, 28, 32, 33, 38, 39, 43, 44, 49]
+        for num in green_numbers:
+            color_mapping[num] = '绿'
         
         return color_mapping
     
