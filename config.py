@@ -1,97 +1,27 @@
-# -*- coding: utf-8 -*-
-"""
-Author: BigCat
-"""
+# 澳门六合彩分析系统配置文件
 import os
 
-ball_name = [
-    ("红球", "red"),
-    ("蓝球", "blue")
-]
+# 数据库配置
+DATABASE_PATH = "macau_lottery.db"
 
-data_file_name = "data.csv"
+# 网站配置
+BASE_URL = "https://kj.123720c.com"
+LOTTERY_URL = "https://kj.123720c.com/kj/"
 
-name_path = {
-    "ssq": {
-        "name": "双色球",
-        "path": "data/ssq/"
-    },
-    "dlt": {
-        "name": "大乐透",
-        "path": "data/dlt/"
-    }
-}
+# 六合彩号码范围
+NUMBER_RANGE = list(range(1, 50))  # 1-49号
+TOTAL_NUMBERS = 49
 
-model_path = os.getcwd() + "/model/"
+# 分析配置
+HOT_THRESHOLD = 0.6  # 热门号码阈值
+COLD_THRESHOLD = 0.3  # 冷门号码阈值
+ANALYSIS_PERIODS = 288  # 分析期数
 
-model_args = {
-    "ssq": {
-        "model_args": {
-            "windows_size": 3,
-            "batch_size": 1,
-            "sequence_len": 6,
-            "red_n_class": 33,
-            "red_epochs": 1,
-            "red_embedding_size": 32,
-            "red_hidden_size": 32,
-            "red_layer_size": 1,
-            "blue_n_class": 16,
-            "blue_epochs": 1,
-            "blue_embedding_size": 32,
-            "blue_hidden_size": 32,
-            "blue_layer_size": 1
-        },
-        "train_args": {
-            "red_learning_rate": 0.001,
-            "red_beta1": 0.9,
-            "red_beta2": 0.999,
-            "red_epsilon": 1e-08,
-            "blue_learning_rate": 0.001,
-            "blue_beta1": 0.9,
-            "blue_beta2": 0.999,
-            "blue_epsilon": 1e-08
-        },
-        "path": {
-            "red": model_path + "/ssq/red_ball_model/",
-            "blue": model_path + "/ssq/blue_ball_model/"
-        }
-    },
-    "dlt": {
-        "model_args": {
-            "windows_size": 3,
-            "batch_size": 1,
-            "red_sequence_len": 5,
-            "red_n_class": 35,
-            "red_epochs": 1,
-            "red_embedding_size": 32,
-            "red_hidden_size": 32,
-            "red_layer_size": 1,
-            "blue_sequence_len": 2,
-            "blue_n_class": 12,
-            "blue_epochs": 1,
-            "blue_embedding_size": 32,
-            "blue_hidden_size": 32,
-            "blue_layer_size": 1
-        },
-        "train_args": {
-            "red_learning_rate": 0.001,
-            "red_beta1": 0.9,
-            "red_beta2": 0.999,
-            "red_epsilon": 1e-08,
-            "blue_learning_rate": 0.001,
-            "blue_beta1": 0.9,
-            "blue_beta2": 0.999,
-            "blue_epsilon": 1e-08
-        },
-        "path": {
-            "red": model_path + "/dlt/red_ball_model/",
-            "blue": model_path + "/dlt/blue_ball_model/"
-        }
-    }
-}
+# 文件路径
+DATA_DIR = "data"
+REPORTS_DIR = "reports"
+LOGS_DIR = "logs"
 
-# 模型名
-pred_key_name = "key_name.json"
-red_ball_model_name = "red_ball_model"
-blue_ball_model_name = "blue_ball_model"
-extension = "ckpt"
+# 创建必要目录
+for directory in [DATA_DIR, REPORTS_DIR, LOGS_DIR]:
+    os.makedirs(directory, exist_ok=True)
