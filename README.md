@@ -1,13 +1,8 @@
 # 双色球+大乐透彩票AI预测
 
-Web端应用：https://www.ai-spinach.xyz/ 在线训练预测
+在线训练预测：https://www.ai-spinach.xyz/ 
 
 有问题，请联系客服（客服1群：246714623（已满员请加2群），客服2群：980203303）
-
-公众号
-
-![avatar](img/gzh.png)
-
 
 ## Installing
         
@@ -40,7 +35,7 @@ python run_predict.py  --name ssq # 执行双色球模型预测
 
 ## Update
 
-* 新上线一款web端应用，无需自己下载源码，在web端可以完成在线训练预测
+* 上线一款web端应用，无需自己下载源码，在web端可以完成在线训练预测
 
 * 新增模型预测评估，可以自行调整训练集和测试集比例，建议训练集采样比例高于0.5
 
