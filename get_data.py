@@ -3,16 +3,34 @@
 Author: BigCat
 """
 import argparse
-import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from loguru import logger
 from config import os, name_path, data_file_name
+from curl_cffi import requests
+from bs4 import XMLParsedAsHTMLWarning
+
+import warnings
+warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--name', default="ssq", type=str, help="选择爬取数据: 双色球/大乐透")
 args = parser.parse_args()
 
+
+headers = {
+    'accept': '*/*',
+    'accept-encoding': 'gzip, deflate, br, zstd',
+    'accept-language': 'zh-CN,zh;q=0.9',
+    'priority': 'u=1, i',
+    'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
+    'sec-ch-ua-mobile': '?1',
+    'sec-ch-ua-platform': '"Android"',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'user-agent': 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36'
+}
 
 def get_url(name):
     """
@@ -29,9 +47,12 @@ def get_current_number(name):
     :return: int
     """
     url, _ = get_url(name)
-    r = requests.get("{}{}".format(url, "history.shtml"), verify=False)
+    url = "{}{}".format(url, "history.shtml")
+    print(url)
+    r = requests.get(url=url, impersonate="chrome116", headers=headers)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
+    # print(soup.prettify())
     current_num = soup.find("div", class_="wrap_datachart").find("input", id="end")["value"]
     return current_num
 
@@ -46,7 +67,7 @@ def spider(name, start, end, mode):
     """
     url, path = get_url(name)
     url = "{}{}{}".format(url, path.format(start), end)
-    r = requests.get(url=url, verify=False)
+    r = requests.get(url=url, impersonate="chrome116", headers=headers)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
     trs = soup.find("tbody", attrs={"id": "tdata"}).find_all("tr")

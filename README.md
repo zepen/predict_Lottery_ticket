@@ -2,13 +2,13 @@
 
 在线训练预测：https://www.ai-spinach.xyz/ 
 
-有问题，请联系客服（客服1群：246714623（已满员请加2群），客服2群：980203303）
+有问题，请联系客服（客服1群：246714623，客服2群：980203303）
 
 ## Installing
         
 * step1，安装anaconda(可参考https://zhuanlan.zhihu.com/p/32925500)；
 
-* step2，创建一个conda环境，conda create -n your_env_name python=3.6；
+* step2，创建一个conda环境，conda create -n your_env_name python=3.11；
        
 * step3，进入创建conda的环境 conda activate your_env_name，然后执行pip install -r requirements.txt；
        
@@ -34,6 +34,8 @@ python run_predict.py  --name ssq # 执行双色球模型预测
 预测结果会打印在控制台
 
 ## Update
+
+* 爬虫好像会被风控，requests切换为curl_cffi, py要升级到3.11
 
 * 上线一款web端应用，无需自己下载源码，在web端可以完成在线训练预测
 

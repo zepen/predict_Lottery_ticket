@@ -34,6 +34,7 @@ class LstmWithCRFModel(object):
         for _ in range(layer_size):
             second_lstm = tf.keras.layers.LSTM(hidden_size, return_sequences=True)(first_lstm)
         self._outputs = tf.keras.layers.Dense(n_class)(second_lstm)
+
         # 构建损失函数
         self._log_likelihood, self._transition_params = crf_log_likelihood(
             self._outputs, self._tag_indices, self._sequence_length
