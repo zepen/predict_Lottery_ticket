@@ -26,6 +26,7 @@ headers = {
     'sec-ch-ua': '"Chromium";v="128", "Not;A=Brand";v="24", "Google Chrome";v="128"',
     'sec-ch-ua-mobile': '?1',
     'sec-ch-ua-platform': '"Android"',
+    'Referer': 'https://datachart.500.com/',
     'sec-fetch-dest': 'empty',
     'sec-fetch-mode': 'cors',
     'sec-fetch-site': 'same-origin',
@@ -47,7 +48,7 @@ def get_current_number(name):
     """ 获取最新一期数字
     :return: int
     """
-    url, _ = get_url(name)
+    url, path = get_url(name)
     url = "{}{}".format(url, "history.shtml")
     print(url)
     r = requests.get(url=url, impersonate="chrome116", headers=headers)
@@ -114,6 +115,9 @@ def spider(name, start, end, mode):
             logger.warning("抱歉，没有找到数据源！")
 
         data.append(item)
+
+    if name == 'qlc' or name == 'qxc':
+        data = data[1:]
 
     if mode == "train":
         df = pd.DataFrame(data)
