@@ -38,7 +38,8 @@ def get_url(name):
     :return:
     """
     url = "https://datachart.500.com/{}/history/".format(name)
-    path = "newinc/history.php?start={}&end="
+    path = "newinc" if name in ["ssq", "dlt", "qlc"] else "inc"
+    path += "/history.php?start={}&end="
     return url, path
 
 
@@ -67,10 +68,15 @@ def spider(name, start, end, mode):
     """
     url, path = get_url(name)
     url = "{}{}{}".format(url, path.format(start), end)
+    print(url)
     r = requests.get(url=url, impersonate="chrome116", headers=headers)
     r.encoding = "gb2312"
     soup = BeautifulSoup(r.text, "lxml")
-    trs = soup.find("tbody", attrs={"id": "tdata"}).find_all("tr")
+    trs = soup.find("tbody", attrs={"id": "tdata"})
+    if trs:
+        trs = trs.find_all("tr")
+    else:
+        trs = soup.find('div', class_='chart').find_all("tr")
     data = []
     for tr in trs:
         item = dict()
@@ -79,16 +85,35 @@ def spider(name, start, end, mode):
             for i in range(6):
                 item[u"红球_{}".format(i+1)] = tr.find_all("td")[i+1].get_text().strip()
             item[u"蓝球"] = tr.find_all("td")[7].get_text().strip()
-            data.append(item)
+
         elif name == "dlt":
             item[u"期数"] = tr.find_all("td")[0].get_text().strip()
             for i in range(5):
                 item[u"红球_{}".format(i+1)] = tr.find_all("td")[i+1].get_text().strip()
             for j in range(2):
                 item[u"蓝球_{}".format(j+1)] = tr.find_all("td")[6+j].get_text().strip()
-            data.append(item)
+
+        elif name == "qlc":
+            item[u"期数"] = tr.find_all("td")[0].get_text().strip()
+            number = (tr.find_all("td")[1].get_text().strip()).split(" ")
+            for i, num in enumerate(number):
+                if i < 7:
+                    item[u"红球_{}".format(i + 1)] = num
+                else:
+                    item[u"蓝球"] = num
+
+        elif name == "qxc":
+            item[u"期数"] = tr.find_all("td")[0].get_text().strip()
+            number = (tr.find_all("td")[1].get_text().strip()).split(" ")
+            for i, num in enumerate(number):
+                if i < 6:
+                    item[u"红球_{}".format(i + 1)] = num
+                else:
+                    item[u"蓝球"] = num
         else:
             logger.warning("抱歉，没有找到数据源！")
+
+        data.append(item)
 
     if mode == "train":
         df = pd.DataFrame(data)

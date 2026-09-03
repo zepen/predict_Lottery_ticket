@@ -19,6 +19,14 @@ name_path = {
     "dlt": {
         "name": "大乐透",
         "path": "data/dlt/"
+    },
+    "qlc": {
+        "name": "七乐彩",
+        "path": "data/qlc/"
+    },
+    "qxc": {
+        "name": "七星彩",
+        "path": "data/qxc/"
     }
 }
 

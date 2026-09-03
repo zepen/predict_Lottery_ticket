@@ -1,4 +1,4 @@
-# 双色球+大乐透彩票AI预测
+# 双色球/大乐透/七乐彩/七星彩～彩票AI预测
 
 在线训练预测：https://www.ai-spinach.xyz/ 
 
@@ -16,24 +16,28 @@
 
 ## Getting Started
 
-```python
+``` python
 python get_data.py  --name ssq  # 执行获取双色球训练数据
 ```
 如果出现解析错误，应该看看网页 http://datachart.500.com/ssq/history/newinc/history.php 是否可以正常访问
-若要大乐透，替换参数 --name dlt 即可
+若要大乐透，替换参数 --name dlt
+若要七乐彩，替换参数 --name qlc
+若要七星彩，替换参数 --name qxc
 
-```python
+``` python
 python run_train_model.py --name ssq  # 执行训练双色球模型
 ``` 
 开始模型训练，先训练红球模型，再训练蓝球模型，模型参数和超参数在 config.py 文件中自行配置
 具体训练时间消耗与模型参数和超参数相关。
 
-```python
+``` python
 python run_predict.py  --name ssq # 执行双色球模型预测
 ```
 预测结果会打印在控制台
 
 ## Update
+
+* 新增七乐彩、七星彩，输入参数qlc、qxc
 
 * 爬虫好像会被风控，requests切换为curl_cffi, py要升级到3.11
 

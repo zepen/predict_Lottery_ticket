@@ -177,7 +177,7 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
     start_time = time.time()
 
     with tf.compat.v1.Session() as sess:
-        if name == "ssq":
+        if name in ["ssq", "dlt", "qlc"]:
             blue_ball_model = SignalLstmModel(
                 batch_size=m_args["model_args"]["batch_size"],
                 n_class=m_args["model_args"]["blue_n_class"],
@@ -243,7 +243,7 @@ def train_with_eval_blue_ball_model(name, x_train, y_train, x_test, y_test):
         eval_d = {}
         all_true_count = 0
         for j in range(test_data_len):
-            if name == "ssq":
+            if name in ["ssq", "dlt", "qlc"]:
                 true = y_test[j:(j + 1), :]
                 pred = sess.run(blue_ball_model.pred_label
                 , feed_dict={"inputs:0": x_test[j:(j + 1), :]})
