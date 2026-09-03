@@ -20,8 +20,11 @@
 python get_data.py  --name ssq  # 执行获取双色球训练数据
 ```
 如果出现解析错误，应该看看网页 http://datachart.500.com/ssq/history/newinc/history.php 是否可以正常访问
+
 若要大乐透，替换参数 --name dlt
+
 若要七乐彩，替换参数 --name qlc
+
 若要七星彩，替换参数 --name qxc
 
 ``` python
