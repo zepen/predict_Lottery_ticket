@@ -95,7 +95,7 @@ def train_with_eval_red_ball_model(name, x_train, y_train, x_test, y_test):
         red_ball_model = LstmWithCRFModel(
             batch_size=m_args["model_args"]["batch_size"],
             n_class=m_args["model_args"]["red_n_class"],
-            ball_num=m_args["model_args"]["sequence_len"] if name == "ssq" else m_args["model_args"]["red_sequence_len"],
+            ball_num=m_args["model_args"]["red_sequence_len"] if name == "ssq" else m_args["model_args"]["red_sequence_len"],
             w_size=m_args["model_args"]["windows_size"],
             embedding_size=m_args["model_args"]["red_embedding_size"],
             words_size=m_args["model_args"]["red_n_class"],
